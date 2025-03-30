@@ -26,6 +26,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -44,6 +48,11 @@ interface InvoiceListProps {
   onViewInvoice: (id: string) => void;
   onDeleteInvoice: (id: string) => void;
   onOpenGenerator: () => void;
+  onStatusChange?: (
+    id: string,
+    newStatus: "paid" | "pending" | "overdue",
+    updatedInvoices: Invoice[],
+  ) => void;
 }
 
 const statusColorMap = {
@@ -58,6 +67,7 @@ const InvoiceList = ({
   onViewInvoice,
   onDeleteInvoice,
   onOpenGenerator,
+  onStatusChange,
 }: InvoiceListProps) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
@@ -168,6 +178,101 @@ const InvoiceList = ({
                             <Edit className="mr-2 h-4 w-4" />
                             <span>{t("edit")}</span>
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className="cursor-pointer">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "mr-2 capitalize",
+                                  statusColorMap[invoice.status],
+                                )}
+                              >
+                                {t(invoice.status)}
+                              </Badge>
+                              <span>{t("changeStatus")}</span>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const updatedInvoices = invoices.map((inv) =>
+                                    inv.id === invoice.id
+                                      ? { ...inv, status: "paid" }
+                                      : inv,
+                                  );
+                                  // In a real app, this would update the database
+                                  // For now, we'll just update the local state via the parent component
+                                  onStatusChange?.(
+                                    invoice.id,
+                                    "paid",
+                                    updatedInvoices,
+                                  );
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "mr-2 capitalize",
+                                    statusColorMap.paid,
+                                  )}
+                                >
+                                  {t("paid")}
+                                </Badge>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const updatedInvoices = invoices.map((inv) =>
+                                    inv.id === invoice.id
+                                      ? { ...inv, status: "pending" }
+                                      : inv,
+                                  );
+                                  onStatusChange?.(
+                                    invoice.id,
+                                    "pending",
+                                    updatedInvoices,
+                                  );
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "mr-2 capitalize",
+                                    statusColorMap.pending,
+                                  )}
+                                >
+                                  {t("pending")}
+                                </Badge>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const updatedInvoices = invoices.map((inv) =>
+                                    inv.id === invoice.id
+                                      ? { ...inv, status: "overdue" }
+                                      : inv,
+                                  );
+                                  onStatusChange?.(
+                                    invoice.id,
+                                    "overdue",
+                                    updatedInvoices,
+                                  );
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "mr-2 capitalize",
+                                    statusColorMap.overdue,
+                                  )}
+                                >
+                                  {t("overdue")}
+                                </Badge>
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDeleteInvoice(invoice.id)}
                             className="cursor-pointer text-red-600 focus:text-red-600"

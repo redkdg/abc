@@ -2,8 +2,17 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Check } from "lucide-react";
+import {
+  Search,
+  Check,
+  Settings,
+  FileText,
+  Layout,
+  Palette,
+  Grid,
+} from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Template {
   id: string;
@@ -17,14 +26,17 @@ interface TemplateListProps {
   templates: Template[];
   selectedTemplate: string;
   onSelectTemplate: (id: string) => void;
+  onCustomizeTemplate?: (id: string) => void;
 }
 
 const TemplateList = ({
   templates,
   selectedTemplate,
   onSelectTemplate,
+  onCustomizeTemplate,
 }: TemplateListProps) => {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredTemplates = templates.filter(
@@ -32,6 +44,46 @@ const TemplateList = ({
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const handleSelectTemplate = (id: string) => {
+    onSelectTemplate(id);
+    toast({
+      title: t("templateSelected"),
+      description: t("templateSelectedDescription"),
+    });
+  };
+
+  // Template icons based on template ID
+  const getTemplateIcon = (templateId: string) => {
+    switch (templateId) {
+      case "template-1":
+        return <FileText className="h-16 w-16 text-primary" />;
+      case "template-2":
+        return <Palette className="h-16 w-16 text-indigo-500" />;
+      case "template-3":
+        return <Layout className="h-16 w-16 text-amber-600" />;
+      case "template-4":
+        return <Grid className="h-16 w-16 text-emerald-600" />;
+      default:
+        return <FileText className="h-16 w-16 text-primary" />;
+    }
+  };
+
+  // Template color schemes
+  const getTemplateColorScheme = (templateId: string) => {
+    switch (templateId) {
+      case "template-1":
+        return "bg-gradient-to-br from-blue-50 to-indigo-100 border-indigo-200";
+      case "template-2":
+        return "bg-gradient-to-br from-purple-50 to-indigo-100 border-purple-200";
+      case "template-3":
+        return "bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200";
+      case "template-4":
+        return "bg-gradient-to-br from-emerald-50 to-teal-100 border-emerald-200";
+      default:
+        return "bg-gradient-to-br from-blue-50 to-indigo-100 border-indigo-200";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -56,14 +108,11 @@ const TemplateList = ({
           <Card
             key={template.id}
             className={`overflow-hidden cursor-pointer transition-all ${selectedTemplate === template.id ? "ring-2 ring-primary" : "hover:shadow-md"}`}
-            onClick={() => onSelectTemplate(template.id)}
           >
-            <div className="relative aspect-[4/5] bg-gray-100">
-              <img
-                src={template.thumbnail}
-                alt={template.name}
-                className="w-full h-full object-cover"
-              />
+            <div
+              className={`relative aspect-[4/5] ${getTemplateColorScheme(template.id)} flex items-center justify-center`}
+            >
+              {getTemplateIcon(template.id)}
               {selectedTemplate === template.id && (
                 <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
                   <Check className="h-4 w-4" />
@@ -74,12 +123,45 @@ const TemplateList = ({
                   {t("default")}
                 </div>
               )}
+              <div className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm p-2 text-center">
+                <h3 className="font-semibold">{template.name}</h3>
+              </div>
             </div>
             <CardContent className="p-4">
-              <h3 className="font-semibold">{template.name}</h3>
               <p className="text-sm text-muted-foreground">
                 {template.description}
               </p>
+              <div className="flex justify-between mt-4">
+                <Button
+                  variant={
+                    selectedTemplate === template.id ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => handleSelectTemplate(template.id)}
+                >
+                  {selectedTemplate === template.id ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      {t("selected")}
+                    </>
+                  ) : (
+                    t("selectTemplate")
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    onCustomizeTemplate
+                      ? onCustomizeTemplate(template.id)
+                      : null
+                  }
+                  className="flex items-center gap-1"
+                >
+                  <Settings className="h-4 w-4" />
+                  {t("customize")}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

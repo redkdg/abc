@@ -19,10 +19,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trash2, Plus, Eye, Download, Save } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import {
+  getCompany,
+  getSelectedTemplate,
+  getTemplateSettings,
+  getClients,
+  getItems,
+} from "@/lib/storage";
+import { useToast } from "@/components/ui/use-toast";
 
 interface LineItem {
   id: string;
@@ -53,6 +68,7 @@ interface InvoiceData {
   taxRate: number;
   total: number;
   status: "pending" | "paid" | "overdue";
+  templateId?: string;
 }
 
 interface InvoiceGeneratorProps {
@@ -62,8 +78,13 @@ interface InvoiceGeneratorProps {
 
 const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [showPreview, setShowPreview] = useState(false);
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [savedClients, setSavedClients] = useState<any[]>([]);
+  const [savedItems, setSavedItems] = useState<any[]>([]);
 
   const [invoice, setInvoice] = useState<InvoiceData>({
     id: Date.now().toString(),
@@ -100,6 +121,41 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
     status: "pending",
   });
 
+  // Load company data, selected template, clients and items on component mount
+  useEffect(() => {
+    const company = getCompany();
+    const template = getSelectedTemplate();
+    const clients = getClients();
+    const items = getItems();
+
+    if (company) {
+      setCompanyData(company);
+      setInvoice((prev) => ({
+        ...prev,
+        companyName: company.name,
+        companyAddress: company.address,
+        companyEmail: company.email,
+        companyPhone: company.phone,
+      }));
+    }
+
+    if (template) {
+      setSelectedTemplateId(template);
+      setInvoice((prev) => ({
+        ...prev,
+        templateId: template,
+      }));
+    }
+
+    if (clients && clients.length > 0) {
+      setSavedClients(clients);
+    }
+
+    if (items && items.length > 0) {
+      setSavedItems(items);
+    }
+  }, []);
+
   // Calculate totals whenever items or tax rate changes
   useEffect(() => {
     const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
@@ -124,6 +180,28 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
     }));
   };
 
+  const handleClientChange = (value: string) => {
+    // Find the client details from saved clients
+    const clientDetails = savedClients.find(
+      (client) => client.name === value || client === value,
+    );
+
+    if (clientDetails && typeof clientDetails === "object") {
+      setInvoice((prev) => ({
+        ...prev,
+        client: value,
+        clientAddress: clientDetails.address || "",
+        clientEmail: clientDetails.email || "",
+        clientPhone: clientDetails.phone || "",
+      }));
+    } else {
+      setInvoice((prev) => ({
+        ...prev,
+        client: value,
+      }));
+    }
+  };
+
   const handleTaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const taxRate = parseFloat(e.target.value) || 0;
     setInvoice((prev) => ({
@@ -145,6 +223,21 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
           amount: 0,
         },
       ],
+    }));
+  };
+
+  const addSavedItem = (item: any) => {
+    const newItem = {
+      id: Date.now().toString(),
+      description: item.description || item.name,
+      quantity: 1,
+      rate: item.price || item.rate || 0,
+      amount: item.price || item.rate || 0,
+    };
+
+    setInvoice((prev) => ({
+      ...prev,
+      items: [...prev.items, newItem],
     }));
   };
 
@@ -191,6 +284,7 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
       date: invoice.date,
       status: "pending",
       amount: invoice.total, // Add amount field for consistency with other invoices
+      templateId: selectedTemplateId || getSelectedTemplate() || "template-1", // Ensure template ID is saved
     };
 
     if (onSave) {
@@ -216,27 +310,155 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
         .padStart(4, "0")}`,
     }));
 
-    alert(t("invoiceSaved"));
+    // Show toast notification with client name if available
+    if (invoice.client) {
+      toast({
+        title: t("invoiceSaved"),
+        description: t("invoiceSavedForClient").replace(
+          "{client}",
+          invoice.client,
+        ),
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: t("invoiceSaved"),
+        description: t("invoiceSavedDescription"),
+        variant: "default",
+      });
+    }
   };
 
   const generatePDF = async () => {
     if (!invoicePreviewRef.current) return;
 
-    // Use html2canvas to capture the invoice preview
-    const canvas = await html2canvas(invoicePreviewRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
+    try {
+      // Apply any pending styles and wait for them to be rendered
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-    // Create PDF with jsPDF
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+      // Get template settings if available
+      const templateId =
+        invoice.templateId ||
+        selectedTemplateId ||
+        getSelectedTemplate() ||
+        "template-1";
 
-    // Calculate dimensions to maintain aspect ratio
-    const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Use the getTemplateSettings function to get settings
+      const settings = getTemplateSettings(templateId);
 
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    pdf.save(`Invoice_${invoice.invoiceNumber}.pdf`);
+      // Use html2canvas to capture the invoice preview with template settings
+      const canvas = await html2canvas(invoicePreviewRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: settings?.colors?.background || "#ffffff",
+        onclone: (clonedDoc) => {
+          // Ensure all styles are applied in the cloned document
+          const clonedElement = clonedDoc.getElementById(
+            invoicePreviewRef.current?.id || "",
+          );
+          if (clonedElement) {
+            clonedElement.style.width = `${invoicePreviewRef.current?.offsetWidth}px`;
+
+            // Apply template settings if available
+            if (settings) {
+              // Apply colors
+              if (settings.colors) {
+                clonedElement.style.backgroundColor =
+                  settings.colors.background || "#ffffff";
+                clonedElement.style.color = settings.colors.text || "#1f2937";
+
+                // Find header elements and apply primary color
+                const headers =
+                  clonedElement.querySelectorAll("h1, h2, h3, th");
+                headers.forEach((header) => {
+                  header.style.color = settings.colors.primary || "#4f46e5";
+                });
+
+                // Apply secondary color to specific elements
+                const secondaryElements = clonedElement.querySelectorAll(
+                  ".text-secondary, tfoot tr",
+                );
+                secondaryElements.forEach((el) => {
+                  el.style.color = settings.colors.secondary || "#f97316";
+                });
+              }
+
+              // Apply fonts
+              if (settings.fonts) {
+                clonedElement.style.fontFamily = settings.fonts.body || "Inter";
+
+                const headings = clonedElement.querySelectorAll(
+                  "h1, h2, h3, h4, h5, h6",
+                );
+                headings.forEach((heading) => {
+                  heading.style.fontFamily = settings.fonts.heading || "Inter";
+                });
+              }
+
+              // Apply font sizes
+              if (settings.fontSize) {
+                clonedElement.style.fontSize = `${settings.fontSize.body || 14}px`;
+
+                const headings = clonedElement.querySelectorAll("h1");
+                headings.forEach((heading) => {
+                  heading.style.fontSize = `${settings.fontSize.heading || 24}px`;
+                });
+
+                const subheadings = clonedElement.querySelectorAll("h2, h3");
+                subheadings.forEach((subheading) => {
+                  subheading.style.fontSize = `${settings.fontSize.subheading || 18}px`;
+                });
+              }
+
+              // Apply margins
+              if (settings.margins) {
+                clonedElement.style.padding = `${settings.margins.top || 40}px ${settings.margins.right || 40}px ${settings.margins.bottom || 40}px ${settings.margins.left || 40}px`;
+              }
+
+              // Make sure logo is visible
+              const logoImg = clonedElement.querySelector("img");
+              if (logoImg) {
+                logoImg.crossOrigin = "anonymous";
+                logoImg.style.maxHeight = "64px";
+                logoImg.style.maxWidth = "200px";
+              }
+            }
+          }
+        },
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // Create PDF with jsPDF
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+
+      // Calculate dimensions to maintain aspect ratio
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      // Add language-specific filename
+      const invoiceText = t("invoice");
+      pdf.save(`${invoiceText}_${invoice.invoiceNumber}.pdf`);
+
+      // Show success notification
+      toast({
+        title: t("pdfGenerated"),
+        description: t("pdfGeneratedDescription"),
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: t("errorGeneratingPDF"),
+        description: String(error),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReset = () => {
@@ -253,10 +475,12 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
       clientAddress: "",
       clientEmail: "",
       clientPhone: "",
-      companyName: "InvoiceGen",
-      companyAddress: "123 Business Street, Suite 100, New York, NY 10001",
-      companyEmail: "contact@invoicegen.com",
-      companyPhone: "+1 (555) 123-4567",
+      companyName: companyData?.name || "InvoiceGen",
+      companyAddress:
+        companyData?.address ||
+        "123 Business Street, Suite 100, New York, NY 10001",
+      companyEmail: companyData?.email || "contact@invoicegen.com",
+      companyPhone: companyData?.phone || "+1 (555) 123-4567",
       items: [
         {
           id: "1",
@@ -273,7 +497,18 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
       taxRate: 10,
       total: 0,
       status: "pending",
+      templateId: selectedTemplateId || getSelectedTemplate() || "template-1", // Preserve template ID on reset
     });
+  };
+
+  // Get template settings for the preview
+  const getTemplateSettingsForPreview = () => {
+    const templateId =
+      invoice.templateId ||
+      selectedTemplateId ||
+      getSelectedTemplate() ||
+      "template-1";
+    return getTemplateSettings(templateId);
   };
 
   return (
@@ -297,49 +532,177 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
               <DialogHeader>
                 <DialogTitle>{t("invoicePreview")}</DialogTitle>
               </DialogHeader>
-              <div ref={invoicePreviewRef} className="bg-white p-6 rounded-lg">
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <h2 className="text-xl font-bold">{invoice.companyName}</h2>
-                    <p className="text-sm text-gray-600">
-                      {invoice.companyAddress}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {invoice.companyEmail}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {invoice.companyPhone}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                      {t("invoice")}
-                    </h1>
-                    <p className="text-lg"># {invoice.invoiceNumber}</p>
-                    <p className="text-sm text-gray-600">
-                      {t("date")}: {invoice.date}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {t("dueDate")}: {invoice.dueDate}
-                    </p>
-                  </div>
-                </div>
+              <div
+                id="invoice-preview"
+                ref={invoicePreviewRef}
+                className="bg-white p-6 rounded-lg"
+              >
+                {/* Get template settings */}
+                {(() => {
+                  // Get company data
+                  const companyData = getCompany() || {};
+                  const settings = getTemplateSettingsForPreview();
 
-                <div className="grid grid-cols-2 gap-8 mb-8">
-                  <div>
-                    <h3 className="font-semibold mb-2">{t("billTo")}</h3>
-                    <p className="font-medium">{invoice.client}</p>
-                    <p className="text-sm text-gray-600">
-                      {invoice.clientAddress}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {invoice.clientEmail}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {invoice.clientPhone}
-                    </p>
-                  </div>
-                </div>
+                  // Default layout if no settings found
+                  const layout = settings?.layout || {
+                    logoPosition: "top-left",
+                    companyInfoPosition: "top-left",
+                    clientInfoPosition: "top-right",
+                    invoiceDetailsPosition: "top-right",
+                    invoiceDetailsCustomPosition: { x: 50, y: 50 },
+                    showLogo: true,
+                  };
+
+                  return (
+                    <>
+                      {/* Logo Section */}
+                      {layout.showLogo && (
+                        <div
+                          className={`flex ${layout.logoPosition === "top-center" ? "justify-center" : layout.logoPosition === "top-right" ? "justify-end" : "justify-start"} mb-6`}
+                        >
+                          <div className="h-16 w-auto">
+                            <img
+                              src={
+                                companyData?.logo ||
+                                "https://api.dicebear.com/7.x/initials/svg?seed=InvoiceGen"
+                              }
+                              alt="Company Logo"
+                              className="h-full w-auto object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-start mb-8">
+                        {/* Company Info */}
+                        <div
+                          className={
+                            layout.companyInfoPosition === "top-right"
+                              ? "order-2"
+                              : "order-1"
+                          }
+                        >
+                          <h2 className="text-xl font-bold">
+                            {invoice.companyName}
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            {invoice.companyAddress}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.companyEmail}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.companyPhone}
+                          </p>
+                        </div>
+
+                        {/* Invoice Details */}
+                        {layout.invoiceDetailsPosition === "top-right" && (
+                          <div className="text-right">
+                            <h1 className="text-2xl font-bold text-gray-800">
+                              {t("invoice")}
+                            </h1>
+                            <p className="text-lg"># {invoice.invoiceNumber}</p>
+                            <p className="text-sm text-gray-600">
+                              {t("date")}: {invoice.date}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {t("dueDate")}: {invoice.dueDate}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* Client Info and Invoice Details (if bottom) */}
+                {(() => {
+                  const settings = getTemplateSettingsForPreview();
+
+                  // Default layout if no settings found
+                  const layout = settings?.layout || {
+                    logoPosition: "top-left",
+                    companyInfoPosition: "top-left",
+                    clientInfoPosition: "top-right",
+                    invoiceDetailsPosition: "top-right",
+                    invoiceDetailsCustomPosition: { x: 50, y: 50 },
+                    showLogo: true,
+                  };
+
+                  return (
+                    <>
+                      <div
+                        className={`grid ${layout.clientInfoPosition === "bottom" ? "grid-cols-1" : "grid-cols-2"} gap-8 mb-8`}
+                      >
+                        {/* Client Info */}
+                        <div
+                          className={
+                            layout.clientInfoPosition === "top-left"
+                              ? "order-1"
+                              : "order-2"
+                          }
+                        >
+                          <h3 className="font-semibold mb-2">{t("billTo")}</h3>
+                          <p className="font-medium">{invoice.client}</p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.clientAddress}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.clientEmail}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.clientPhone}
+                          </p>
+                        </div>
+
+                        {/* Invoice Details (if bottom or custom position) */}
+                        {(layout.invoiceDetailsPosition === "bottom" ||
+                          layout.invoiceDetailsPosition === "custom") && (
+                          <div
+                            className={
+                              layout.invoiceDetailsPosition === "custom"
+                                ? "absolute"
+                                : layout.clientInfoPosition === "bottom"
+                                  ? "mt-4"
+                                  : ""
+                            }
+                            style={
+                              layout.invoiceDetailsPosition === "custom"
+                                ? {
+                                    left: `${layout.invoiceDetailsCustomPosition?.x || 50}%`,
+                                    top: `${layout.invoiceDetailsCustomPosition?.y || 50}%`,
+                                    transform: "translate(-50%, -50%)",
+                                    background: "white",
+                                    padding: "8px",
+                                    borderRadius: "4px",
+                                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                    zIndex: 10,
+                                  }
+                                : {}
+                            }
+                          >
+                            <h3 className="font-semibold mb-2">
+                              {t("invoiceDetails")}
+                            </h3>
+                            <p className="font-medium">
+                              {t("invoice")} # {invoice.invoiceNumber}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {t("date")}: {invoice.date}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {t("dueDate")}: {invoice.dueDate}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {t("status")}: {t("draft")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 <Table>
                   <TableHeader>
@@ -480,12 +843,33 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="client">{t("clientName")}</Label>
-              <Input
-                id="client"
-                name="client"
-                value={invoice.client}
-                onChange={handleInputChange}
-              />
+              {savedClients.length > 0 ? (
+                <Select
+                  value={invoice.client}
+                  onValueChange={handleClientChange}
+                >
+                  <SelectTrigger id="client">
+                    <SelectValue placeholder={t("selectClient")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {savedClients.map((client) => (
+                      <SelectItem
+                        key={client.id || client.name || client}
+                        value={client.name || client}
+                      >
+                        {client.name || client}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="client"
+                  name="client"
+                  value={invoice.client}
+                  onChange={handleInputChange}
+                />
+              )}
             </div>
             <div>
               <Label htmlFor="clientAddress">{t("address")}</Label>
@@ -561,15 +945,41 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("items")}</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={addLineItem}
-          >
-            <Plus size={16} />
-            {t("addItem")}
-          </Button>
+          <div className="flex gap-2">
+            {savedItems.length > 0 && (
+              <Select
+                onValueChange={(value) => {
+                  const item = savedItems.find(
+                    (item) => item.id === value || item.name === value,
+                  );
+                  if (item) addSavedItem(item);
+                }}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder={t("addSavedItem")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedItems.map((item) => (
+                    <SelectItem
+                      key={item.id || item.name}
+                      value={item.id || item.name}
+                    >
+                      {item.name || item.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={addLineItem}
+            >
+              <Plus size={16} />
+              {t("addItem")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

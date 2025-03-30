@@ -14,7 +14,7 @@ import {
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
-import { LanguageProvider } from "./lib/LanguageContext";
+import LanguageProvider from "./lib/LanguageContext";
 import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import InvoicesPage from "./pages/InvoicesPage";
@@ -262,6 +262,30 @@ function App() {
     if (selectedTemplate) saveSelectedTemplate(selectedTemplate);
   }, [selectedTemplate]);
 
+  // Update invoice template settings when template changes
+  useEffect(() => {
+    // This ensures all invoices use the latest template settings
+    if (selectedTemplate && invoices.length > 0) {
+      const updatedInvoices = invoices.map((invoice) => ({
+        ...invoice,
+        templateId: selectedTemplate,
+      }));
+      setInvoices(updatedInvoices);
+      saveInvoices(updatedInvoices);
+    }
+  }, [selectedTemplate]);
+
+  const handleCreateInvoice = () => {
+    // Navigate to invoices page with create mode and pass the selected template
+    const template = getSelectedTemplate();
+    window.location.href = `/invoices?action=create&template=${template || "template-1"}`;
+  };
+
+  const handleViewInvoice = (id: string) => {
+    // Navigate to invoices page with view mode
+    window.location.href = `/invoices?action=view&id=${id}`;
+  };
+
   return (
     <LanguageProvider>
       <Suspense fallback={<p>Loading...</p>}>
@@ -272,8 +296,8 @@ function App() {
               element={
                 <MainLayout>
                   <Dashboard
-                    onCreateInvoice={() => {}}
-                    onViewInvoice={() => {}}
+                    onCreateInvoice={handleCreateInvoice}
+                    onViewInvoice={handleViewInvoice}
                   />
                 </MainLayout>
               }

@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Plus, ArrowLeft, Package } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import {
+  getClients,
+  getItems,
+  getSelectedTemplate,
+  getTemplateSettings,
+} from "@/lib/storage";
 
 interface InvoiceFormProps {
   invoice?: any;
@@ -39,7 +45,25 @@ const InvoiceForm = ({
     tax: 0,
     total: 0,
     status: "pending",
+    templateId: getSelectedTemplate() || "template-1",
   });
+
+  const [savedClients, setSavedClients] = useState<string[]>([]);
+  const [savedItems, setSavedItems] = useState<any[]>([]);
+
+  // Load saved clients and items on component mount
+  useEffect(() => {
+    const clients = getClients();
+    const items = getItems();
+
+    if (clients && clients.length > 0) {
+      setSavedClients(clients.map((client: any) => client.name || client));
+    }
+
+    if (items && items.length > 0) {
+      setSavedItems(items);
+    }
+  }, []);
 
   // If editing an existing invoice, populate the form
   useEffect(() => {
@@ -55,12 +79,29 @@ const InvoiceForm = ({
         subtotal: existingInvoice.subtotal || 0,
         tax: existingInvoice.tax || 0,
         total: existingInvoice.total || 0,
+        templateId:
+          existingInvoice.templateId || getSelectedTemplate() || "template-1",
       });
     }
   }, [existingInvoice]);
 
   const handleClientChange = (value: string) => {
-    setInvoice({ ...invoice, client: value });
+    // Find the client details from saved clients
+    const clientDetails = getClients().find(
+      (client: any) => client.name === value || client === value,
+    );
+
+    if (clientDetails && typeof clientDetails === "object") {
+      setInvoice({
+        ...invoice,
+        client: value,
+        clientAddress: clientDetails.address || "",
+        clientEmail: clientDetails.email || "",
+        clientPhone: clientDetails.phone || "",
+      });
+    } else {
+      setInvoice({ ...invoice, client: value });
+    }
   };
 
   const handleDateChange = (
@@ -113,6 +154,31 @@ const InvoiceForm = ({
     });
   };
 
+  const addSavedItem = (item: any) => {
+    const newItem = {
+      id: Date.now().toString(),
+      description: item.description || item.name,
+      quantity: 1,
+      rate: item.price || item.rate || 0,
+      amount: item.price || item.rate || 0,
+    };
+
+    const newItems = [...invoice.items, newItem];
+    const subtotal = newItems.reduce(
+      (sum, item) => sum + Number(item.amount),
+      0,
+    );
+    const tax = subtotal * 0.1;
+
+    setInvoice({
+      ...invoice,
+      items: newItems,
+      subtotal,
+      tax,
+      total: subtotal + tax,
+    });
+  };
+
   const removeItem = (index: number) => {
     if (invoice.items.length === 1) return;
 
@@ -159,15 +225,6 @@ const InvoiceForm = ({
     onSave(finalInvoice);
   };
 
-  // Predefined clients for the demo
-  const clients = [
-    "Acme Corp",
-    "Globex Inc",
-    "Wayne Enterprises",
-    "Stark Industries",
-    "Umbrella Corp",
-  ];
-
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -186,11 +243,24 @@ const InvoiceForm = ({
                   <SelectValue placeholder={t("selectClient")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client} value={client}>
-                      {client}
-                    </SelectItem>
-                  ))}
+                  {savedClients.length > 0
+                    ? savedClients.map((client) => (
+                        <SelectItem key={client} value={client}>
+                          {client}
+                        </SelectItem>
+                      ))
+                    : // Fallback to predefined clients if no saved clients
+                      [
+                        "Acme Corp",
+                        "Globex Inc",
+                        "Wayne Enterprises",
+                        "Stark Industries",
+                        "Umbrella Corp",
+                      ].map((client) => (
+                        <SelectItem key={client} value={client}>
+                          {client}
+                        </SelectItem>
+                      ))}
                 </SelectContent>
               </Select>
             </div>
@@ -220,15 +290,41 @@ const InvoiceForm = ({
           <div>
             <div className="flex justify-between items-center mb-2">
               <Label>{t("items")}</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-                className="flex items-center gap-1"
-              >
-                <Plus size={16} /> {t("addItem")}
-              </Button>
+              <div className="flex gap-2">
+                {savedItems.length > 0 && (
+                  <Select
+                    onValueChange={(value) => {
+                      const item = savedItems.find(
+                        (item) => item.id === value || item.name === value,
+                      );
+                      if (item) addSavedItem(item);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder={t("addSavedItem")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {savedItems.map((item) => (
+                        <SelectItem
+                          key={item.id || item.name}
+                          value={item.id || item.name}
+                        >
+                          {item.name || item.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addItem}
+                  className="flex items-center gap-1"
+                >
+                  <Plus size={16} /> {t("addItem")}
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">

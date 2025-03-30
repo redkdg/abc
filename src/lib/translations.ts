@@ -7,6 +7,8 @@ export type TranslationKey =
   | "invoicePreview"
   | "downloadPDF"
   | "invoiceSaved"
+  | "invoiceSavedForClient"
+  | "invoiceSavedDescription"
   | "billTo"
   | "reset"
   | "draft"
@@ -160,7 +162,72 @@ export type TranslationKey =
   | "clientReports"
   | "clientReportsDescription"
   | "financialReports"
-  | "financialReportsDescription";
+  | "financialReportsDescription"
+  | "invoiceUpdated"
+  | "invoiceUpdatedDescription"
+  | "invoiceCreated"
+  | "invoiceCreatedDescription"
+  | "invoiceDeleted"
+  | "invoiceDeletedDescription"
+  | "customize"
+  | "customizeTemplate"
+  | "previewTemplate"
+  | "layout"
+  | "colors"
+  | "fonts"
+  | "margins"
+  | "layoutSettings"
+  | "colorSettings"
+  | "fontSettings"
+  | "marginSettings"
+  | "logoPosition"
+  | "companyInfoPosition"
+  | "clientInfoPosition"
+  | "showFooter"
+  | "topLeft"
+  | "topCenter"
+  | "topRight"
+  | "left"
+  | "right"
+  | "bottom"
+  | "showLogo"
+  | "invoiceDetailsPosition"
+  | "invoiceDetails"
+  | "active"
+  | "inactive"
+  | "revenue"
+  | "revenueTrend"
+  | "invoiceStatus"
+  | "clientActivity"
+  | "errorGeneratingPDF"
+  | "emailSent"
+  | "emailSentToClient"
+  | "emailSentDescription"
+  | "pdfGenerated"
+  | "pdfGeneratedDescription"
+  | "billTo"
+  | "primaryColor"
+  | "secondaryColor"
+  | "backgroundColor"
+  | "textColor"
+  | "headingFont"
+  | "bodyFont"
+  | "headingSize"
+  | "bodySize"
+  | "topMargin"
+  | "rightMargin"
+  | "bottomMargin"
+  | "leftMargin"
+  | "selectTemplate"
+  | "templateCustomized"
+  | "templateCustomizedDescription"
+  | "custom"
+  | "dragToPosition"
+  | "previewBeforeDownload"
+  | "exactPreview"
+  | "changeStatus"
+  | "statusUpdated"
+  | "statusUpdatedDescription";
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -170,6 +237,8 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     invoicePreview: "Invoice Preview",
     downloadPDF: "Download PDF",
     invoiceSaved: "Invoice Saved",
+    invoiceSavedForClient: "New invoice for {client} was saved successfully",
+    invoiceSavedDescription: "Your invoice has been saved successfully",
     billTo: "Bill To",
     reset: "Reset",
     draft: "Draft",
@@ -324,6 +393,72 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     financialReports: "Financial Reports",
     financialReportsDescription:
       "View detailed financial reports and analytics",
+    invoiceUpdated: "Invoice Updated",
+    invoiceUpdatedDescription: "The invoice has been successfully updated",
+    invoiceCreated: "Invoice Created",
+    invoiceCreatedDescription: "The new invoice has been created successfully",
+    invoiceDeleted: "Invoice Deleted",
+    invoiceDeletedDescription: "The invoice has been successfully deleted",
+    customize: "Customize",
+    customizeTemplate: "Customize Template",
+    previewTemplate: "Preview Template",
+    layout: "Layout",
+    colors: "Colors",
+    fonts: "Fonts",
+    margins: "Margins",
+    layoutSettings: "Layout Settings",
+    colorSettings: "Color Settings",
+    fontSettings: "Font Settings",
+    marginSettings: "Margin Settings",
+    logoPosition: "Logo Position",
+    companyInfoPosition: "Company Info Position",
+    clientInfoPosition: "Client Info Position",
+    showFooter: "Show Footer",
+    topLeft: "Top Left",
+    topCenter: "Top Center",
+    topRight: "Top Right",
+    left: "Left",
+    right: "Right",
+    bottom: "Bottom",
+    showLogo: "Show Logo",
+    invoiceDetailsPosition: "Invoice Details Position",
+    invoiceDetails: "Invoice Details",
+    active: "Active",
+    inactive: "Inactive",
+    revenue: "Revenue",
+    revenueTrend: "Revenue Trend",
+    invoiceStatus: "Invoice Status",
+    clientActivity: "Client Activity",
+    errorGeneratingPDF: "Error generating PDF",
+    emailSent: "Email sent successfully",
+    emailSentToClient: "Invoice email sent to {client}",
+    emailSentDescription: "Your invoice has been sent successfully",
+    pdfGenerated: "PDF Generated",
+    pdfGeneratedDescription: "Your invoice PDF has been generated successfully",
+    billTo: "Bill To",
+    primaryColor: "Primary Color",
+    secondaryColor: "Secondary Color",
+    backgroundColor: "Background Color",
+    textColor: "Text Color",
+    headingFont: "Heading Font",
+    bodyFont: "Body Font",
+    headingSize: "Heading Size",
+    bodySize: "Body Size",
+    topMargin: "Top Margin",
+    rightMargin: "Right Margin",
+    bottomMargin: "Bottom Margin",
+    leftMargin: "Left Margin",
+    selectTemplate: "Select Template",
+    templateCustomized: "Template Customized",
+    templateCustomizedDescription: "Your template customization has been saved",
+    custom: "Custom",
+    dragToPosition: "Drag to position",
+    previewBeforeDownload: "Preview before download",
+    exactPreview:
+      "This preview exactly matches how your invoice will look when downloaded",
+    changeStatus: "Change Status",
+    statusUpdated: "Status Updated",
+    statusUpdatedDescription: "Invoice status has been updated successfully",
   },
   fr: {
     downloadProject: "Télécharger le Projet",
@@ -332,6 +467,9 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     invoicePreview: "Aperçu de la Facture",
     downloadPDF: "Télécharger PDF",
     invoiceSaved: "Facture Enregistrée",
+    invoiceSavedForClient:
+      "Nouvelle facture pour {client} enregistrée avec succès",
+    invoiceSavedDescription: "Votre facture a été enregistrée avec succès",
     billTo: "Facturer à",
     reset: "Réinitialiser",
     draft: "Brouillon",
@@ -488,6 +626,74 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     financialReports: "Rapports financiers",
     financialReportsDescription:
       "Voir des rapports financiers et analyses détaillés",
+    invoiceUpdated: "Facture mise à jour",
+    invoiceUpdatedDescription: "La facture a été mise à jour avec succès",
+    invoiceCreated: "Facture créée",
+    invoiceCreatedDescription: "La nouvelle facture a été créée avec succès",
+    invoiceDeleted: "Facture supprimée",
+    invoiceDeletedDescription: "La facture a été supprimée avec succès",
+    customize: "Personnaliser",
+    customizeTemplate: "Personnaliser le modèle",
+    previewTemplate: "Aperçu du modèle",
+    layout: "Mise en page",
+    colors: "Couleurs",
+    fonts: "Polices",
+    margins: "Marges",
+    layoutSettings: "Paramètres de mise en page",
+    colorSettings: "Paramètres de couleur",
+    fontSettings: "Paramètres de police",
+    marginSettings: "Paramètres de marge",
+    logoPosition: "Position du logo",
+    companyInfoPosition: "Position des informations de l'entreprise",
+    clientInfoPosition: "Position des informations du client",
+    showFooter: "Afficher le pied de page",
+    topLeft: "En haut à gauche",
+    topCenter: "En haut au centre",
+    topRight: "En haut à droite",
+    left: "Gauche",
+    right: "Droite",
+    bottom: "En bas",
+    showLogo: "Afficher le logo",
+    invoiceDetailsPosition: "Position des détails de la facture",
+    invoiceDetails: "Détails de la facture",
+    active: "Actif",
+    inactive: "Inactif",
+    revenue: "Revenu",
+    revenueTrend: "Tendance des revenus",
+    invoiceStatus: "Statut de la facture",
+    clientActivity: "Activité client",
+    errorGeneratingPDF: "Erreur lors de la génération du PDF",
+    emailSent: "Email envoyé avec succès",
+    emailSentToClient: "Email de facture envoyé à {client}",
+    emailSentDescription: "Votre facture a été envoyée avec succès",
+    pdfGenerated: "PDF généré",
+    pdfGeneratedDescription: "Votre PDF de facture a été généré avec succès",
+    billTo: "Facturer à",
+    primaryColor: "Couleur principale",
+    secondaryColor: "Couleur secondaire",
+    backgroundColor: "Couleur d'arrière-plan",
+    textColor: "Couleur du texte",
+    headingFont: "Police des titres",
+    bodyFont: "Police du corps",
+    headingSize: "Taille des titres",
+    bodySize: "Taille du corps",
+    topMargin: "Marge supérieure",
+    rightMargin: "Marge droite",
+    bottomMargin: "Marge inférieure",
+    leftMargin: "Marge gauche",
+    selectTemplate: "Sélectionner un modèle",
+    templateCustomized: "Modèle personnalisé",
+    templateCustomizedDescription:
+      "Votre personnalisation de modèle a été enregistrée",
+    custom: "Personnalisé",
+    dragToPosition: "Glisser pour positionner",
+    previewBeforeDownload: "Aperçu avant téléchargement",
+    exactPreview:
+      "Cet aperçu correspond exactement à l'apparence de votre facture lors du téléchargement",
+    changeStatus: "Changer le statut",
+    statusUpdated: "Statut mis à jour",
+    statusUpdatedDescription:
+      "Le statut de la facture a été mis à jour avec succès",
   },
   nl: {
     downloadProject: "Project Downloaden",
@@ -496,6 +702,9 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     invoicePreview: "Factuurvoorbeeld",
     downloadPDF: "PDF Downloaden",
     invoiceSaved: "Factuur Opgeslagen",
+    invoiceSavedForClient:
+      "Nieuwe factuur voor {client} is succesvol opgeslagen",
+    invoiceSavedDescription: "Uw factuur is succesvol opgeslagen",
     billTo: "Factureren aan",
     reset: "Resetten",
     draft: "Concept",
@@ -511,50 +720,50 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     settings: "Instellingen",
     logout: "Uitloggen",
     search: "Zoeken...",
-    newInvoice: "Nieuwe factuur",
+    newInvoice: "Nieuwe Factuur",
     overview: "Overzicht",
     reports: "Rapporten",
-    analyticsOverview: "Analytisch overzicht",
-    totalRevenue: "Totale omzet",
-    outstandingInvoices: "Openstaande facturen",
-    paidInvoices: "Betaalde facturen",
-    overdueInvoices: "Achterstallige facturen",
-    averagePaymentTime: "Gemiddelde betaaltijd",
-    activeClients: "Actieve klanten",
-    totalInvoices: "Totaal aantal facturen",
+    analyticsOverview: "Analytisch Overzicht",
+    totalRevenue: "Totale Omzet",
+    outstandingInvoices: "Openstaande Facturen",
+    paidInvoices: "Betaalde Facturen",
+    overdueInvoices: "Achterstallige Facturen",
+    averagePaymentTime: "Gemiddelde Betaaltijd",
+    activeClients: "Actieve Klanten",
+    totalInvoices: "Totaal Aantal Facturen",
     conversionRate: "Conversiepercentage",
     last30Days: "Laatste 30 dagen",
     awaitingPayment: "Wachtend op betaling",
-    needsAttention: "Heeft aandacht nodig",
-    fromInvoiceSent: "Vanaf factuurdatum",
+    needsAttention: "Vereist aandacht",
+    fromInvoiceSent: "Vanaf factuur verzonden",
     totalClientBase: "Totale klantenbasis",
     allTime: "Alle tijden",
     invoicesPaidOnTime: "Facturen op tijd betaald",
-    recentInvoices: "Recente facturen",
-    searchInvoices: "Zoek facturen...",
+    recentInvoices: "Recente Facturen",
+    searchInvoices: "Facturen zoeken...",
     invoice: "Factuur",
     client: "Klant",
     date: "Datum",
     amount: "Bedrag",
     status: "Status",
     actions: "Acties",
-    viewInvoice: "Factuur bekijken",
-    downloadInvoice: "Factuur downloaden",
-    moreOptions: "Meer opties",
-    viewAllInvoices: "Alle facturen bekijken",
-    showing: "Toont",
+    viewInvoice: "Factuur Bekijken",
+    downloadInvoice: "Factuur Downloaden",
+    moreOptions: "Meer Opties",
+    viewAllInvoices: "Alle Facturen Bekijken",
+    showing: "Tonen",
     of: "van",
-    quickActions: "Snelle acties",
+    quickActions: "Snelle Acties",
     frequentlyUsedActions: "Veelgebruikte acties voor factuurbeheer",
-    createNewInvoice: "Nieuwe factuur maken",
+    createNewInvoice: "Nieuwe Factuur Aanmaken",
     generateNewInvoice: "Genereer een nieuwe factuur voor een klant",
-    manageClients: "Klanten beheren",
+    manageClients: "Klanten Beheren",
     addEditClientInfo: "Klantinformatie toevoegen of bewerken",
     itemLibraryAction: "Artikelbibliotheek",
     manageProductsServices: "Beheer uw producten en diensten",
     templatesAction: "Sjablonen",
     browseSelectTemplates: "Blader door en selecteer factuursjablonen",
-    customizeBranding: "Merk aanpassen",
+    customizeBranding: "Branding Aanpassen",
     updateColorsFontsLogo: "Kleuren, lettertypen en logo bijwerken",
     companySettingsAction: "Bedrijfsinstellingen",
     updateCompanyProfile: "Werk uw bedrijfsprofiel bij",
@@ -563,7 +772,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     overdue: "Achterstallig",
     notifications: "Meldingen",
     helpResources: "Hulp & Bronnen",
-    myAccount: "Mijn account",
+    myAccount: "Mijn Account",
     profile: "Profiel",
     admin: "Beheerder",
     loading: "Laden...",
@@ -572,7 +781,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     clientInformation: "Klantinformatie",
     clientName: "Klantnaam",
     selectClient: "Selecteer een klant",
-    invoiceDetails: "Factuurgegevens",
+    invoiceDetails: "Factuurdetails",
     issueDate: "Uitgiftedatum",
     dueDate: "Vervaldatum",
     items: "Artikelen",
@@ -580,19 +789,19 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     quantity: "Aantal",
     rate: "Tarief",
     itemDescription: "Artikelomschrijving",
-    addItem: "Artikel toevoegen",
+    addItem: "Artikel Toevoegen",
     subtotal: "Subtotaal",
     tax: "Belasting",
     total: "Totaal",
-    additionalInfo: "Aanvullende informatie",
+    additionalInfo: "Aanvullende Informatie",
     notes: "Notities",
     notesPlaceholder: "Voeg hier notities toe...",
     terms: "Voorwaarden",
     cancel: "Annuleren",
-    saveInvoice: "Factuur opslaan",
+    saveInvoice: "Factuur Opslaan",
     noInvoicesFound:
       "Geen facturen gevonden die overeenkomen met uw zoekopdracht",
-    noInvoicesYet: "Nog geen facturen. Maak uw eerste factuur!",
+    noInvoicesYet: "Nog geen facturen. Maak uw eerste factuur aan!",
     print: "Afdrukken",
     download: "Downloaden",
     send: "Verzenden",
@@ -602,57 +811,123 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     name: "Naam",
     email: "E-mail",
     phone: "Telefoon",
-    newClient: "Nieuwe klant",
-    searchClients: "Zoek klanten...",
-    editClient: "Klant bewerken",
-    deleteClient: "Klant verwijderen",
+    newClient: "Nieuwe Klant",
+    searchClients: "Klanten zoeken...",
+    editClient: "Klant Bewerken",
+    deleteClient: "Klant Verwijderen",
     address: "Adres",
     save: "Opslaan",
-    clientDeleted: "Klant verwijderd",
+    clientDeleted: "Klant Verwijderd",
     clientDeletedDescription: "De klant is succesvol verwijderd",
-    clientUpdated: "Klant bijgewerkt",
+    clientUpdated: "Klant Bijgewerkt",
     clientUpdatedDescription: "De klantinformatie is bijgewerkt",
-    clientCreated: "Klant aangemaakt",
+    clientCreated: "Klant Aangemaakt",
     clientCreatedDescription: "De nieuwe klant is succesvol toegevoegd",
-    newItem: "Nieuw artikel",
-    searchItems: "Zoek artikelen...",
+    newItem: "Nieuw Artikel",
+    searchItems: "Artikelen zoeken...",
     price: "Prijs",
     type: "Type",
-    editItem: "Artikel bewerken",
-    deleteItem: "Artikel verwijderen",
+    editItem: "Artikel Bewerken",
+    deleteItem: "Artikel Verwijderen",
     noItemsFound:
       "Geen artikelen gevonden die overeenkomen met uw zoekopdracht",
     noItemsYet: "Nog geen artikelen. Voeg uw eerste artikel toe!",
     product: "Product",
     service: "Dienst",
-    itemDeleted: "Artikel verwijderd",
+    itemDeleted: "Artikel Verwijderd",
     itemDeletedDescription: "Het artikel is succesvol verwijderd",
-    itemUpdated: "Artikel bijgewerkt",
+    itemUpdated: "Artikel Bijgewerkt",
     itemUpdatedDescription: "De artikelinformatie is bijgewerkt",
-    itemCreated: "Artikel aangemaakt",
+    itemCreated: "Artikel Aangemaakt",
     itemCreatedDescription: "Het nieuwe artikel is succesvol toegevoegd",
-    searchTemplates: "Zoek sjablonen...",
+    searchTemplates: "Sjablonen zoeken...",
     default: "Standaard",
     noTemplatesFound:
       "Geen sjablonen gevonden die overeenkomen met uw zoekopdracht",
     noTemplatesYet: "Nog geen sjablonen beschikbaar",
-    templateSelected: "Sjabloon geselecteerd",
+    templateSelected: "Sjabloon Geselecteerd",
     templateSelectedDescription: "Uw factuursjabloon is bijgewerkt",
     companyInformation: "Bedrijfsinformatie",
     companyName: "Bedrijfsnaam",
     website: "Website",
-    taxId: "BTW-nummer / Fiscaal ID",
-    uploadLogo: "Logo uploaden",
-    saveChanges: "Wijzigingen opslaan",
-    profileUpdated: "Profiel bijgewerkt",
+    taxId: "BTW-nummer / Fiscaal Nummer",
+    uploadLogo: "Logo Uploaden",
+    saveChanges: "Wijzigingen Opslaan",
+    profileUpdated: "Profiel Bijgewerkt",
     profileUpdatedDescription: "Uw bedrijfsprofiel is bijgewerkt",
     invoiceReports: "Factuurrapportages",
     invoiceReportsDescription:
       "Bekijk gedetailleerde rapporten over uw facturen",
-    clientReports: "Klantrapportages",
+    clientReports: "Klantenrapportages",
     clientReportsDescription: "Bekijk gedetailleerde rapporten over uw klanten",
-    financialReports: "Financiële rapportages",
+    financialReports: "Financiële Rapportages",
     financialReportsDescription:
       "Bekijk gedetailleerde financiële rapporten en analyses",
+    invoiceUpdated: "Factuur Bijgewerkt",
+    invoiceUpdatedDescription: "De factuur is succesvol bijgewerkt",
+    invoiceCreated: "Factuur Aangemaakt",
+    invoiceCreatedDescription: "De nieuwe factuur is succesvol aangemaakt",
+    invoiceDeleted: "Factuur Verwijderd",
+    invoiceDeletedDescription: "De factuur is succesvol verwijderd",
+    customize: "Aanpassen",
+    customizeTemplate: "Sjabloon Aanpassen",
+    previewTemplate: "Sjabloonvoorbeeld",
+    layout: "Lay-out",
+    colors: "Kleuren",
+    fonts: "Lettertypen",
+    margins: "Marges",
+    layoutSettings: "Lay-outinstellingen",
+    colorSettings: "Kleurinstellingen",
+    fontSettings: "Lettertypeinstellingen",
+    marginSettings: "Marge-instellingen",
+    logoPosition: "Logopositie",
+    companyInfoPosition: "Positie Bedrijfsinformatie",
+    clientInfoPosition: "Positie Klantinformatie",
+    showFooter: "Voettekst Tonen",
+    topLeft: "Linksboven",
+    topCenter: "Middenboven",
+    topRight: "Rechtsboven",
+    left: "Links",
+    right: "Rechts",
+    bottom: "Onder",
+    showLogo: "Logo Tonen",
+    invoiceDetailsPosition: "Positie Factuurdetails",
+    invoiceDetails: "Factuurdetails",
+    active: "Actief",
+    inactive: "Inactief",
+    revenue: "Omzet",
+    revenueTrend: "Omzettrend",
+    invoiceStatus: "Factuurstatus",
+    clientActivity: "Klantactiviteit",
+    errorGeneratingPDF: "Fout bij het genereren van PDF",
+    emailSent: "E-mail succesvol verzonden",
+    emailSentToClient: "Factuure-mail verzonden naar {client}",
+    emailSentDescription: "Uw factuur is succesvol verzonden",
+    pdfGenerated: "PDF Gegenereerd",
+    pdfGeneratedDescription: "Uw factuur-PDF is succesvol gegenereerd",
+    billTo: "Factureren aan",
+    primaryColor: "Primaire Kleur",
+    secondaryColor: "Secundaire Kleur",
+    backgroundColor: "Achtergrondkleur",
+    textColor: "Tekstkleur",
+    headingFont: "Lettertype Koppen",
+    bodyFont: "Lettertype Tekst",
+    headingSize: "Grootte Koppen",
+    bodySize: "Grootte Tekst",
+    topMargin: "Bovenmarge",
+    rightMargin: "Rechtermarge",
+    bottomMargin: "Ondermarge",
+    leftMargin: "Linkermarge",
+    selectTemplate: "Sjabloon Selecteren",
+    templateCustomized: "Sjabloon Aangepast",
+    templateCustomizedDescription: "Uw sjablooncustomisatie is opgeslagen",
+    custom: "Aangepast",
+    dragToPosition: "Sleep naar positie",
+    previewBeforeDownload: "Voorbeeld voor downloaden",
+    exactPreview:
+      "Dit voorbeeld komt exact overeen met hoe uw factuur eruit zal zien bij het downloaden",
+    changeStatus: "Status wijzigen",
+    statusUpdated: "Status bijgewerkt",
+    statusUpdatedDescription: "Factuurstatus is succesvol bijgewerkt",
   },
 };

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import InvoiceList from "@/components/invoice/InvoiceList";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
 import InvoiceDetail from "@/components/invoice/InvoiceDetail";
 import InvoiceGenerator from "@/components/invoice/InvoiceGenerator";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useToast } from "@/components/ui/use-toast";
+import { getCompany } from "@/lib/storage";
 
 type View = "list" | "create" | "detail" | "generator";
 
@@ -18,6 +19,26 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
   const { toast } = useToast();
   const [view, setView] = useState<View>("list");
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [companyData, setCompanyData] = useState<any>(null);
+
+  // Check URL parameters for actions
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    const id = params.get("id");
+
+    if (action === "create") {
+      handleCreateInvoice();
+    } else if (action === "view" && id) {
+      handleViewInvoice(id);
+    }
+
+    // Load company data
+    const company = getCompany();
+    if (company) {
+      setCompanyData(company);
+    }
+  }, []);
 
   const handleCreateInvoice = () => {
     setSelectedInvoice(null);
@@ -34,6 +55,27 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
       setSelectedInvoice(invoice);
       setView("detail");
     }
+  };
+
+  const handleStatusChange = (
+    id: string,
+    newStatus: "paid" | "pending" | "overdue",
+    updatedInvoices: any[],
+  ) => {
+    setInvoices(updatedInvoices);
+
+    // If the status changed invoice is currently selected, update it
+    if (selectedInvoice && selectedInvoice.id === id) {
+      setSelectedInvoice({
+        ...selectedInvoice,
+        status: newStatus,
+      });
+    }
+
+    toast({
+      title: t("statusUpdated"),
+      description: t("statusUpdatedDescription"),
+    });
   };
 
   const handleSaveInvoice = (invoice: any) => {
@@ -83,6 +125,7 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
           onViewInvoice={handleViewInvoice}
           onDeleteInvoice={handleDeleteInvoice}
           onOpenGenerator={handleOpenGenerator}
+          onStatusChange={handleStatusChange}
         />
       )}
 

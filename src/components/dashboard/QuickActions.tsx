@@ -16,6 +16,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 interface QuickActionsProps {
   actions?: {
@@ -24,10 +25,12 @@ interface QuickActionsProps {
     icon: React.ReactNode;
     onClick?: () => void;
   }[];
+  onCreateInvoice?: () => void;
 }
 
-const QuickActions = ({ actions }: QuickActionsProps) => {
+const QuickActions = ({ actions, onCreateInvoice }: QuickActionsProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   // Use translated actions if none provided
   const translatedDefaultActions = [
@@ -35,60 +38,64 @@ const QuickActions = ({ actions }: QuickActionsProps) => {
       title: t("createNewInvoice"),
       description: t("generateNewInvoice"),
       icon: <PlusCircle size={20} />,
-      onClick: () => console.log("Create invoice clicked"),
+      onClick: () =>
+        onCreateInvoice
+          ? onCreateInvoice()
+          : navigate("/invoices?action=create"),
     },
     {
       title: t("manageClients"),
       description: t("addEditClientInfo"),
       icon: <Users size={20} />,
-      onClick: () => console.log("Manage clients clicked"),
+      onClick: () => navigate("/clients"),
     },
     {
       title: t("itemLibraryAction"),
       description: t("manageProductsServices"),
       icon: <Package size={20} />,
-      onClick: () => console.log("Item library clicked"),
+      onClick: () => navigate("/items"),
     },
     {
       title: t("templatesAction"),
       description: t("browseSelectTemplates"),
       icon: <FileText size={20} />,
-      onClick: () => console.log("Templates clicked"),
+      onClick: () => navigate("/templates"),
     },
     {
       title: t("customizeBranding"),
       description: t("updateColorsFontsLogo"),
       icon: <Palette size={20} />,
-      onClick: () => console.log("Customize branding clicked"),
+      onClick: () => navigate("/templates?action=customize"),
     },
     {
       title: t("companySettingsAction"),
       description: t("updateCompanyProfile"),
       icon: <Settings size={20} />,
-      onClick: () => console.log("Company settings clicked"),
+      onClick: () => navigate("/settings"),
     },
   ];
 
   const actionsToUse = actions || translatedDefaultActions;
   return (
     <Card className="w-full h-full bg-white overflow-hidden">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold">{t("quickActions")}</CardTitle>
-        <CardDescription>{t("frequentlyUsedActions")}</CardDescription>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-bold">{t("quickActions")}</CardTitle>
+        <CardDescription className="text-xs">
+          {t("frequentlyUsedActions")}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-2 gap-2 pt-2">
         {actionsToUse.map((action, index) => (
           <Button
             key={index}
             variant="outline"
-            className="flex justify-start items-center gap-3 h-14 px-4 hover:bg-slate-50 transition-colors"
+            className="flex justify-start items-center gap-2 h-10 px-3 hover:bg-slate-50 transition-colors text-sm"
             onClick={action.onClick}
           >
             <div className="flex-shrink-0 text-primary">{action.icon}</div>
-            <div className="flex flex-col items-start">
-              <span className="font-medium">{action.title}</span>
-              <span className="text-xs text-muted-foreground">
-                {action.description}
+            <div className="flex flex-col items-start overflow-hidden">
+              <span className="font-medium truncate w-full">
+                {action.title}
               </span>
             </div>
           </Button>
@@ -97,44 +104,5 @@ const QuickActions = ({ actions }: QuickActionsProps) => {
     </Card>
   );
 };
-
-const defaultActions = [
-  {
-    title: "Create New Invoice",
-    description: "Generate a new invoice for a client",
-    icon: <PlusCircle size={20} />,
-    onClick: () => console.log("Create invoice clicked"),
-  },
-  {
-    title: "Manage Clients",
-    description: "Add or edit client information",
-    icon: <Users size={20} />,
-    onClick: () => console.log("Manage clients clicked"),
-  },
-  {
-    title: "Item Library",
-    description: "Manage your products and services",
-    icon: <Package size={20} />,
-    onClick: () => console.log("Item library clicked"),
-  },
-  {
-    title: "Templates",
-    description: "Browse and select invoice templates",
-    icon: <FileText size={20} />,
-    onClick: () => console.log("Templates clicked"),
-  },
-  {
-    title: "Customize Branding",
-    description: "Update colors, fonts and logo",
-    icon: <Palette size={20} />,
-    onClick: () => console.log("Customize branding clicked"),
-  },
-  {
-    title: "Company Settings",
-    description: "Update your company profile",
-    icon: <Settings size={20} />,
-    onClick: () => console.log("Company settings clicked"),
-  },
-];
 
 export default QuickActions;

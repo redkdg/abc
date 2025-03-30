@@ -13,6 +13,7 @@ import {
 import { Eye, Download, MoreHorizontal, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 interface Invoice {
   id: string;
@@ -27,6 +28,7 @@ interface RecentInvoicesProps {
   invoices?: Invoice[];
   title?: string;
   showSearch?: boolean;
+  onViewInvoice?: (id: string) => void;
 }
 
 const statusColorMap = {
@@ -36,52 +38,31 @@ const statusColorMap = {
 };
 
 const RecentInvoices = ({
-  invoices = [
-    {
-      id: "1",
-      invoiceNumber: "INV-001",
-      client: "Acme Corp",
-      date: "2023-05-15",
-      amount: 1250.0,
-      status: "paid",
-    },
-    {
-      id: "2",
-      invoiceNumber: "INV-002",
-      client: "Globex Inc",
-      date: "2023-05-20",
-      amount: 850.5,
-      status: "pending",
-    },
-    {
-      id: "3",
-      invoiceNumber: "INV-003",
-      client: "Wayne Enterprises",
-      date: "2023-05-10",
-      amount: 3200.75,
-      status: "overdue",
-    },
-    {
-      id: "4",
-      invoiceNumber: "INV-004",
-      client: "Stark Industries",
-      date: "2023-05-25",
-      amount: 1750.25,
-      status: "paid",
-    },
-    {
-      id: "5",
-      invoiceNumber: "INV-005",
-      client: "Umbrella Corp",
-      date: "2023-05-28",
-      amount: 920.0,
-      status: "pending",
-    },
-  ],
+  invoices = [],
   title = "Recent Invoices",
   showSearch = true,
+  onViewInvoice,
 }: RecentInvoicesProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleViewInvoice = (id: string) => {
+    if (onViewInvoice) {
+      onViewInvoice(id);
+    } else {
+      navigate(`/invoices?action=view&id=${id}`);
+    }
+  };
+
+  const handleDownloadInvoice = (id: string) => {
+    // Navigate to invoice view with download parameter
+    navigate(`/invoices?action=view&id=${id}&download=true`);
+  };
+
+  const handleViewAll = () => {
+    navigate("/invoices");
+  };
+
   return (
     <div className="w-full h-full bg-white rounded-lg shadow-sm p-6 flex flex-col gap-4">
       <div className="flex justify-between items-center">
@@ -114,60 +95,80 @@ const RecentInvoices = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.map((invoice) => (
-              <TableRow key={invoice.id}>
-                <TableCell className="font-medium">
-                  {invoice.invoiceNumber}
-                </TableCell>
-                <TableCell>{invoice.client}</TableCell>
-                <TableCell>{invoice.date}</TableCell>
-                <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={cn("capitalize", statusColorMap[invoice.status])}
-                  >
-                    {invoice.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("viewInvoice")}
+            {invoices.length > 0 ? (
+              invoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell className="font-medium">
+                    {invoice.invoiceNumber}
+                  </TableCell>
+                  <TableCell>{invoice.client}</TableCell>
+                  <TableCell>{invoice.date}</TableCell>
+                  <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize",
+                        statusColorMap[invoice.status],
+                      )}
                     >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("downloadInvoice")}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t("moreOptions")}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
+                      {t(invoice.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("viewInvoice")}
+                        onClick={() => handleViewInvoice(invoice.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("downloadInvoice")}
+                        onClick={() => handleDownloadInvoice(invoice.id)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t("moreOptions")}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-6 text-muted-foreground"
+                >
+                  {t("noInvoicesYet")}
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
 
       <div className="flex justify-between items-center mt-auto pt-4">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleViewAll}>
           {t("viewAllInvoices")}
         </Button>
         <div className="text-sm text-gray-500">
-          {t("showing")} {invoices.length} {t("of")} {invoices.length}{" "}
-          {t("invoices")}
+          {invoices.length > 0 ? (
+            <>
+              {t("showing")} {invoices.length} {t("of")} {invoices.length}{" "}
+              {t("invoices")}
+            </>
+          ) : null}
         </div>
       </div>
     </div>

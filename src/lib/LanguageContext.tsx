@@ -15,9 +15,7 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export const useLanguage = () => useContext(LanguageContext);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>("en");
 
   // Load language from localStorage on initial render
@@ -42,4 +40,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </LanguageContext.Provider>
   );
-};
+}
+
+export default LanguageProvider;
