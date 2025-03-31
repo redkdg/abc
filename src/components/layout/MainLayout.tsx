@@ -2,6 +2,8 @@ import React from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { Toaster } from "@/components/ui/toaster";
+import { useLanguage } from "@/lib/LanguageContext";
+import UserMenu from "./UserMenu";
 
 interface MainLayoutProps {
   children: React.ReactNode;

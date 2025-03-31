@@ -19,36 +19,48 @@ export const saveUser = (user: UserProfile): void => {
   localStorage.setItem("user", JSON.stringify(user));
 };
 
+// Get user-specific key prefix
+export const getUserKeyPrefix = (): string => {
+  const user = getUser();
+  return user ? `user-${user.id}-` : "";
+};
+
 // Get invoices from local storage
 export const getInvoices = (): any[] => {
-  const invoicesData = localStorage.getItem("invoices");
+  const prefix = getUserKeyPrefix();
+  const invoicesData = localStorage.getItem(`${prefix}invoices`);
   return invoicesData ? JSON.parse(invoicesData) : [];
 };
 
 // Save invoices to local storage
 export const saveInvoices = (invoices: any[]): void => {
-  localStorage.setItem("invoices", JSON.stringify(invoices));
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}invoices`, JSON.stringify(invoices));
 };
 
 // Get company profile from local storage
 export const getCompany = (): any => {
-  const companyData = localStorage.getItem("company");
+  const prefix = getUserKeyPrefix();
+  const companyData = localStorage.getItem(`${prefix}company`);
   return companyData ? JSON.parse(companyData) : null;
 };
 
 // Save company profile to local storage
 export const saveCompany = (company: any): void => {
-  localStorage.setItem("company", JSON.stringify(company));
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}company`, JSON.stringify(company));
 };
 
 // Get selected template from local storage
 export const getSelectedTemplate = (): string => {
-  return localStorage.getItem("selectedTemplate") || "template-1";
+  const prefix = getUserKeyPrefix();
+  return localStorage.getItem(`${prefix}selectedTemplate`) || "template-1";
 };
 
 // Save selected template to local storage
 export const saveSelectedTemplate = (templateId: string): void => {
-  localStorage.setItem("selectedTemplate", templateId);
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}selectedTemplate`, templateId);
 };
 
 // Template settings
@@ -140,22 +152,52 @@ export const saveTemplateSettings = (
 
 // Get clients from local storage
 export const getClients = (): any[] => {
-  const clientsData = localStorage.getItem("clients");
+  const prefix = getUserKeyPrefix();
+  const clientsData = localStorage.getItem(`${prefix}clients`);
   return clientsData ? JSON.parse(clientsData) : [];
 };
 
 // Save clients to local storage
 export const saveClients = (clients: any[]): void => {
-  localStorage.setItem("clients", JSON.stringify(clients));
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}clients`, JSON.stringify(clients));
 };
 
 // Get items from local storage
 export const getItems = (): any[] => {
-  const itemsData = localStorage.getItem("items");
+  const prefix = getUserKeyPrefix();
+  const itemsData = localStorage.getItem(`${prefix}items`);
   return itemsData ? JSON.parse(itemsData) : [];
 };
 
 // Save items to local storage
 export const saveItems = (items: any[]): void => {
-  localStorage.setItem("items", JSON.stringify(items));
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}items`, JSON.stringify(items));
+};
+
+// Get template settings from local storage with user prefix
+export const getUserTemplateSettings = (
+  templateId: string,
+): TemplateSettings | null => {
+  const prefix = getUserKeyPrefix();
+  const settingsData = localStorage.getItem(
+    `${prefix}template-settings-${templateId}`,
+  );
+  if (settingsData) {
+    return JSON.parse(settingsData);
+  }
+  return getTemplateSettings(templateId); // Fall back to global settings
+};
+
+// Save template settings to local storage with user prefix
+export const saveUserTemplateSettings = (
+  templateId: string,
+  settings: TemplateSettings,
+): void => {
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(
+    `${prefix}template-settings-${templateId}`,
+    JSON.stringify(settings),
+  );
 };

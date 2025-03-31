@@ -10,7 +10,10 @@ import {
   saveItems,
   getSelectedTemplate,
   saveSelectedTemplate,
+  getUserTemplateSettings,
+  saveUserTemplateSettings,
 } from "./lib/storage";
+import { useAuth } from "./lib/AuthContext";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
@@ -22,8 +25,10 @@ import ClientsPage from "./pages/ClientsPage";
 import ItemsPage from "./pages/ItemsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import CompanyProfilePage from "./pages/CompanyProfilePage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
+  const { isAuthenticated, user } = useAuth();
   // Default data for the app
   const defaultInvoices = [
     {
@@ -226,20 +231,52 @@ function App() {
 
   const [company, setCompany] = useState(defaultCompany);
 
-  // Load data from localStorage on initial render
+  // Load data from localStorage on initial render or when user changes
   useEffect(() => {
-    const storedInvoices = getInvoices();
-    const storedClients = getClients();
-    const storedItems = getItems();
-    const storedCompany = getCompany();
-    const storedTemplate = getSelectedTemplate();
+    if (isAuthenticated) {
+      const storedInvoices = getInvoices();
+      const storedClients = getClients();
+      const storedItems = getItems();
+      const storedCompany = getCompany();
+      const storedTemplate = getSelectedTemplate();
 
-    setInvoices(storedInvoices.length > 0 ? storedInvoices : defaultInvoices);
-    setClients(storedClients.length > 0 ? storedClients : defaultClients);
-    setItems(storedItems.length > 0 ? storedItems : defaultItems);
-    setCompany(storedCompany || defaultCompany);
-    setSelectedTemplate(storedTemplate);
-  }, []);
+      // Check if this is the first time the user is logging in
+      const userInitialized = localStorage.getItem(
+        `user-${user?.id}-initialized`,
+      );
+
+      setInvoices(
+        storedInvoices.length > 0
+          ? storedInvoices
+          : userInitialized
+            ? []
+            : defaultInvoices,
+      );
+      setClients(
+        storedClients.length > 0
+          ? storedClients
+          : userInitialized
+            ? []
+            : defaultClients,
+      );
+      setItems(
+        storedItems.length > 0
+          ? storedItems
+          : userInitialized
+            ? []
+            : defaultItems,
+      );
+      setCompany(storedCompany || defaultCompany);
+      setSelectedTemplate(storedTemplate);
+    } else {
+      // Clear state when logged out
+      setInvoices([]);
+      setClients([]);
+      setItems([]);
+      setCompany(defaultCompany);
+      setSelectedTemplate("template-1");
+    }
+  }, [isAuthenticated, user?.id]); // Re-run when authentication state changes
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
@@ -291,62 +328,90 @@ function App() {
       <Suspense fallback={<p>Loading...</p>}>
         <>
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route
               path="/"
               element={
-                <MainLayout>
-                  <Dashboard
-                    onCreateInvoice={handleCreateInvoice}
-                    onViewInvoice={handleViewInvoice}
-                  />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <Dashboard
+                      onCreateInvoice={handleCreateInvoice}
+                      onViewInvoice={handleViewInvoice}
+                    />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
             <Route
               path="/invoices"
               element={
-                <MainLayout>
-                  <InvoicesPage invoices={invoices} setInvoices={setInvoices} />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <InvoicesPage
+                      invoices={invoices}
+                      setInvoices={setInvoices}
+                    />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
             <Route
               path="/clients"
               element={
-                <MainLayout>
-                  <ClientsPage clients={clients} setClients={setClients} />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <ClientsPage clients={clients} setClients={setClients} />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
             <Route
               path="/items"
               element={
-                <MainLayout>
-                  <ItemsPage items={items} setItems={setItems} />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <ItemsPage items={items} setItems={setItems} />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
             <Route
               path="/templates"
               element={
-                <MainLayout>
-                  <TemplatesPage
-                    templates={templates}
-                    selectedTemplate={selectedTemplate}
-                    setSelectedTemplate={setSelectedTemplate}
-                  />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <TemplatesPage
+                      templates={templates}
+                      selectedTemplate={selectedTemplate}
+                      setSelectedTemplate={setSelectedTemplate}
+                    />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
             <Route
               path="/settings"
               element={
-                <MainLayout>
-                  <CompanyProfilePage
-                    company={company}
-                    setCompany={setCompany}
-                  />
-                </MainLayout>
+                isAuthenticated ? (
+                  <MainLayout>
+                    <CompanyProfilePage
+                      company={company}
+                      setCompany={setCompany}
+                    />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
               }
             />
           </Routes>

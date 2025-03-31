@@ -43,13 +43,28 @@ const CompanyProfile = ({ company, onSave }: CompanyProfileProps) => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert(t("logoTooLarge"));
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
+          // Store the logo in a more efficient format
+          const logoData = event.target.result as string;
           setFormData((prev) => ({
             ...prev,
-            logo: event.target.result as string,
+            logo: logoData,
           }));
+
+          // Immediately save to localStorage to prevent loss
+          const updatedCompany = {
+            ...formData,
+            logo: logoData,
+          };
+          onSave(updatedCompany);
         }
       };
       reader.readAsDataURL(file);

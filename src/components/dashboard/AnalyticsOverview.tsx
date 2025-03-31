@@ -10,6 +10,7 @@ import {
   PieChart,
   RefreshCw,
   Users,
+  Receipt,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
@@ -123,6 +124,13 @@ const AnalyticsOverview = ({
       value: Math.abs(percentChange),
       isPositive: percentChange >= 0,
     };
+  };
+
+  // Calculate VAT/tax amount
+  const calculateTaxAmount = () => {
+    // Assuming a standard VAT rate of 20% (adjust as needed)
+    const vatRate = 0.2;
+    return totalRevenue * vatRate;
   };
 
   // Revenue chart data (last 6 months)
@@ -308,7 +316,7 @@ const AnalyticsOverview = ({
         </Card>
 
         {/* Conversion Rate */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1">
+        <Card className="col-span-1 md:col-span-1 lg:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
               {t("conversionRate")}
@@ -329,6 +337,28 @@ const AnalyticsOverview = ({
                     style={{ width: `${conversionRate}%` }}
                   ></div>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tax Due */}
+        <Card className="col-span-1 md:col-span-1 lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t("taxDue") || "VAT/Tax Due"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[240px]">
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="text-5xl font-bold text-primary">
+                ${calculateTaxAmount().toLocaleString()}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t("toBeRemitted") || "To be remitted"}
+              </p>
+              <div className="flex items-center justify-center mt-4">
+                <Receipt className="h-8 w-8 text-muted-foreground" />
               </div>
             </div>
           </CardContent>

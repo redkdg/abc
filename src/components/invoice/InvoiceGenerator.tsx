@@ -36,6 +36,7 @@ import {
   getTemplateSettings,
   getClients,
   getItems,
+  getUserTemplateSettings,
 } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -343,8 +344,8 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
         getSelectedTemplate() ||
         "template-1";
 
-      // Use the getTemplateSettings function to get settings
-      const settings = getTemplateSettings(templateId);
+      // Use the getUserTemplateSettings function to get user-specific settings
+      const settings = getUserTemplateSettings(templateId);
 
       // Use html2canvas to capture the invoice preview with template settings
       const canvas = await html2canvas(invoicePreviewRef.current, {
@@ -508,7 +509,7 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
       selectedTemplateId ||
       getSelectedTemplate() ||
       "template-1";
-    return getTemplateSettings(templateId);
+    return getUserTemplateSettings(templateId);
   };
 
   return (

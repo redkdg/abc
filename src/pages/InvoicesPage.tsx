@@ -121,7 +121,6 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
       {view === "list" && (
         <InvoiceList
           invoices={invoices}
-          onCreateInvoice={handleCreateInvoice}
           onViewInvoice={handleViewInvoice}
           onDeleteInvoice={handleDeleteInvoice}
           onOpenGenerator={handleOpenGenerator}

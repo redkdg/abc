@@ -77,19 +77,19 @@ const QuickActions = ({ actions, onCreateInvoice }: QuickActionsProps) => {
 
   const actionsToUse = actions || translatedDefaultActions;
   return (
-    <Card className="w-full h-full bg-white overflow-hidden">
+    <Card className="w-full h-full bg-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-bold">{t("quickActions")}</CardTitle>
         <CardDescription className="text-xs">
           {t("frequentlyUsedActions")}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-2 pt-2">
+      <CardContent className="grid grid-cols-1 gap-3 pt-2">
         {actionsToUse.map((action, index) => (
           <Button
             key={index}
             variant="outline"
-            className="flex justify-start items-center gap-2 h-10 px-3 hover:bg-slate-50 transition-colors text-sm"
+            className="flex justify-start items-center gap-3 h-auto min-h-10 px-3 py-2 hover:bg-slate-50 transition-colors text-sm"
             onClick={action.onClick}
           >
             <div className="flex-shrink-0 text-primary">{action.icon}</div>
