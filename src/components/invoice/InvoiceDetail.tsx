@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { getTemplateSettings, getUserTemplateSettings } from "@/lib/storage";
+import {
+  getTemplateSettings,
+  getUserTemplateSettings,
+  getCompany,
+} from "@/lib/storage";
 
 interface InvoiceDetailProps {
   invoice: any;
@@ -47,6 +51,23 @@ const InvoiceDetail = ({
   const { toast } = useToast();
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [templateSettings, setTemplateSettings] = useState<any>(null);
+
+  // Load company data and template settings when invoice changes
+  useEffect(() => {
+    if (invoice) {
+      const company = getCompany();
+      if (company) {
+        setCompanyData(company);
+      }
+
+      // Get template settings for the invoice's template
+      const templateId = invoice.templateId || "template-1";
+      const settings = getUserTemplateSettings(templateId);
+      setTemplateSettings(settings);
+    }
+  }, [invoice]);
 
   if (!invoice) return null;
 
@@ -117,10 +138,21 @@ const InvoiceDetail = ({
       element.style.padding = `${settings.margins.top || 40}px ${settings.margins.right || 40}px ${settings.margins.bottom || 40}px ${settings.margins.left || 40}px`;
     }
 
-    // Make sure logo is visible
-    const logoImg = element.querySelector("img");
-    if (logoImg) {
-      (logoImg as HTMLImageElement).crossOrigin = "anonymous";
+    // Apply layout settings if available
+    if (settings.layout) {
+      // Handle logo visibility
+      const logoElement = element.querySelector(".company-logo");
+      if (logoElement) {
+        (logoElement as HTMLElement).style.display = settings.layout.showLogo
+          ? "block"
+          : "none";
+      }
+
+      // Make sure logo is visible and has proper cross-origin setting
+      const logoImg = element.querySelector("img");
+      if (logoImg) {
+        (logoImg as HTMLImageElement).crossOrigin = "anonymous";
+      }
     }
   };
 
@@ -196,9 +228,15 @@ const InvoiceDetail = ({
     });
   };
 
-  // Get template settings for display
-  const templateId = invoice.templateId || "template-1";
-  const templateSettings = getUserTemplateSettings(templateId);
+  // Merge company data with invoice data
+  const mergedInvoiceData = {
+    ...invoice,
+    companyName: invoice.companyName || companyData?.name,
+    companyAddress: invoice.companyAddress || companyData?.address,
+    companyEmail: invoice.companyEmail || companyData?.email,
+    companyPhone: invoice.companyPhone || companyData?.phone,
+    companyLogo: invoice.companyLogo || companyData?.logo,
+  };
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
@@ -291,11 +329,17 @@ const InvoiceDetail = ({
               {/* Company Logo and Info */}
               <div className="flex justify-between mb-8">
                 <div>
-                  {invoice.companyLogo && (
+                  {mergedInvoiceData.companyLogo && (
                     <img
-                      src={invoice.companyLogo}
+                      src={mergedInvoiceData.companyLogo}
                       alt="Company Logo"
-                      className="h-16 mb-2"
+                      className="company-logo h-16 mb-2"
+                      style={{
+                        display:
+                          templateSettings?.layout?.showLogo === false
+                            ? "none"
+                            : "block",
+                      }}
                     />
                   )}
                   <h1
@@ -306,11 +350,13 @@ const InvoiceDetail = ({
                       fontSize: `${templateSettings?.fontSize?.heading || 24}px`,
                     }}
                   >
-                    {invoice.companyName || "Your Company"}
+                    {mergedInvoiceData.companyName || "Your Company"}
                   </h1>
-                  <p>{invoice.companyAddress || "Company Address"}</p>
-                  <p>{invoice.companyEmail || "company@example.com"}</p>
-                  <p>{invoice.companyPhone || "+1 (555) 123-4567"}</p>
+                  <p>{mergedInvoiceData.companyAddress || "Company Address"}</p>
+                  <p>
+                    {mergedInvoiceData.companyEmail || "company@example.com"}
+                  </p>
+                  <p>{mergedInvoiceData.companyPhone || "+1 (555) 123-4567"}</p>
                 </div>
                 <div className="text-right">
                   <h2
@@ -325,15 +371,15 @@ const InvoiceDetail = ({
                   </h2>
                   <p>
                     <span className="font-semibold">{t("invoiceNumber")}:</span>{" "}
-                    {invoice.invoiceNumber || "INV-001"}
+                    {mergedInvoiceData.invoiceNumber || "INV-001"}
                   </p>
                   <p>
                     <span className="font-semibold">{t("date")}:</span>{" "}
-                    {invoice.date || new Date().toLocaleDateString()}
+                    {mergedInvoiceData.date || new Date().toLocaleDateString()}
                   </p>
                   <p>
                     <span className="font-semibold">{t("dueDate")}:</span>{" "}
-                    {invoice.dueDate ||
+                    {mergedInvoiceData.dueDate ||
                       new Date(
                         new Date().setDate(new Date().getDate() + 30),
                       ).toLocaleDateString()}
@@ -342,11 +388,11 @@ const InvoiceDetail = ({
                     className={cn(
                       "mt-2",
                       statusColorMap[
-                        invoice.status as keyof typeof statusColorMap
+                        mergedInvoiceData.status as keyof typeof statusColorMap
                       ] || statusColorMap.pending,
                     )}
                   >
-                    {invoice.status || "pending"}
+                    {mergedInvoiceData.status || "pending"}
                   </Badge>
                 </div>
               </div>
@@ -364,11 +410,11 @@ const InvoiceDetail = ({
                   {t("billTo")}
                 </h3>
                 <p className="font-medium">
-                  {invoice.clientName || "Client Name"}
+                  {mergedInvoiceData.clientName || "Client Name"}
                 </p>
-                <p>{invoice.clientAddress || "Client Address"}</p>
-                <p>{invoice.clientEmail || "client@example.com"}</p>
-                <p>{invoice.clientPhone || "+1 (555) 987-6543"}</p>
+                <p>{mergedInvoiceData.clientAddress || "Client Address"}</p>
+                <p>{mergedInvoiceData.clientEmail || "client@example.com"}</p>
+                <p>{mergedInvoiceData.clientPhone || "+1 (555) 987-6543"}</p>
               </div>
 
               {/* Invoice Items */}
@@ -389,20 +435,22 @@ const InvoiceDetail = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {invoice.items?.length > 0 ? (
-                      invoice.items.map((item: any, index: number) => (
-                        <tr key={index} className="border-b">
-                          <td className="py-2">{item.name}</td>
-                          <td className="py-2">{item.description}</td>
-                          <td className="py-2 text-right">{item.quantity}</td>
-                          <td className="py-2 text-right">
-                            ${parseFloat(item.price).toFixed(2)}
-                          </td>
-                          <td className="py-2 text-right">
-                            ${(item.quantity * item.price).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))
+                    {mergedInvoiceData.items?.length > 0 ? (
+                      mergedInvoiceData.items.map(
+                        (item: any, index: number) => (
+                          <tr key={index} className="border-b">
+                            <td className="py-2">{item.name}</td>
+                            <td className="py-2">{item.description}</td>
+                            <td className="py-2 text-right">{item.quantity}</td>
+                            <td className="py-2 text-right">
+                              ${parseFloat(item.price).toFixed(2)}
+                            </td>
+                            <td className="py-2 text-right">
+                              ${(item.quantity * item.price).toFixed(2)}
+                            </td>
+                          </tr>
+                        ),
+                      )
                     ) : (
                       <tr className="border-b">
                         <td className="py-2">Sample Item</td>
@@ -425,8 +473,8 @@ const InvoiceDetail = ({
                       </td>
                       <td className="py-2 text-right">
                         $
-                        {invoice.items?.length > 0
-                          ? invoice.items
+                        {mergedInvoiceData.items?.length > 0
+                          ? mergedInvoiceData.items
                               .reduce(
                                 (sum: number, item: any) =>
                                   sum + item.quantity * item.price,
@@ -439,18 +487,18 @@ const InvoiceDetail = ({
                     <tr>
                       <td colSpan={3}></td>
                       <td className="py-2 text-right font-semibold">
-                        {t("tax")} ({invoice.taxRate || 10}%):
+                        {t("tax")} ({mergedInvoiceData.taxRate || 10}%):
                       </td>
                       <td className="py-2 text-right">
                         $
-                        {invoice.items?.length > 0
+                        {mergedInvoiceData.items?.length > 0
                           ? (
-                              (invoice.items.reduce(
+                              (mergedInvoiceData.items.reduce(
                                 (sum: number, item: any) =>
                                   sum + item.quantity * item.price,
                                 0,
                               ) *
-                                (invoice.taxRate || 10)) /
+                                (mergedInvoiceData.taxRate || 10)) /
                               100
                             ).toFixed(2)
                           : "10.00"}
@@ -461,14 +509,14 @@ const InvoiceDetail = ({
                       <td className="py-2 text-right">{t("total")}:</td>
                       <td className="py-2 text-right">
                         $
-                        {invoice.items?.length > 0
+                        {mergedInvoiceData.items?.length > 0
                           ? (
-                              invoice.items.reduce(
+                              mergedInvoiceData.items.reduce(
                                 (sum: number, item: any) =>
                                   sum + item.quantity * item.price,
                                 0,
                               ) *
-                              (1 + (invoice.taxRate || 10) / 100)
+                              (1 + (mergedInvoiceData.taxRate || 10) / 100)
                             ).toFixed(2)
                           : "110.00"}
                       </td>
@@ -489,7 +537,7 @@ const InvoiceDetail = ({
                 >
                   {t("notes")}
                 </h3>
-                <p>{invoice.notes || t("defaultInvoiceNote")}</p>
+                <p>{mergedInvoiceData.notes || t("defaultInvoiceNote")}</p>
               </div>
 
               {/* Payment Info */}
@@ -506,15 +554,17 @@ const InvoiceDetail = ({
                 </h3>
                 <p>
                   <span className="font-semibold">{t("bankName")}:</span>{" "}
-                  {invoice.bankName || "Example Bank"}
+                  {mergedInvoiceData.bankName || "Example Bank"}
                 </p>
                 <p>
                   <span className="font-semibold">{t("accountName")}:</span>{" "}
-                  {invoice.accountName || invoice.companyName || "Your Company"}
+                  {mergedInvoiceData.accountName ||
+                    mergedInvoiceData.companyName ||
+                    "Your Company"}
                 </p>
                 <p>
                   <span className="font-semibold">{t("accountNumber")}:</span>{" "}
-                  {invoice.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
+                  {mergedInvoiceData.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
                 </p>
               </div>
             </div>
@@ -545,11 +595,17 @@ const InvoiceDetail = ({
             {/* Company Logo and Info */}
             <div className="flex justify-between mb-8">
               <div>
-                {invoice.companyLogo && (
+                {mergedInvoiceData.companyLogo && (
                   <img
-                    src={invoice.companyLogo}
+                    src={mergedInvoiceData.companyLogo}
                     alt="Company Logo"
-                    className="h-16 mb-2"
+                    className="company-logo h-16 mb-2"
+                    style={{
+                      display:
+                        templateSettings?.layout?.showLogo === false
+                          ? "none"
+                          : "block",
+                    }}
                   />
                 )}
                 <h1
@@ -560,11 +616,11 @@ const InvoiceDetail = ({
                     fontSize: `${templateSettings?.fontSize?.heading || 24}px`,
                   }}
                 >
-                  {invoice.companyName || "Your Company"}
+                  {mergedInvoiceData.companyName || "Your Company"}
                 </h1>
-                <p>{invoice.companyAddress || "Company Address"}</p>
-                <p>{invoice.companyEmail || "company@example.com"}</p>
-                <p>{invoice.companyPhone || "+1 (555) 123-4567"}</p>
+                <p>{mergedInvoiceData.companyAddress || "Company Address"}</p>
+                <p>{mergedInvoiceData.companyEmail || "company@example.com"}</p>
+                <p>{mergedInvoiceData.companyPhone || "+1 (555) 123-4567"}</p>
               </div>
               <div className="text-right">
                 <h2
@@ -579,15 +635,15 @@ const InvoiceDetail = ({
                 </h2>
                 <p>
                   <span className="font-semibold">{t("invoiceNumber")}:</span>{" "}
-                  {invoice.invoiceNumber || "INV-001"}
+                  {mergedInvoiceData.invoiceNumber || "INV-001"}
                 </p>
                 <p>
                   <span className="font-semibold">{t("date")}:</span>{" "}
-                  {invoice.date || new Date().toLocaleDateString()}
+                  {mergedInvoiceData.date || new Date().toLocaleDateString()}
                 </p>
                 <p>
                   <span className="font-semibold">{t("dueDate")}:</span>{" "}
-                  {invoice.dueDate ||
+                  {mergedInvoiceData.dueDate ||
                     new Date(
                       new Date().setDate(new Date().getDate() + 30),
                     ).toLocaleDateString()}
@@ -596,11 +652,11 @@ const InvoiceDetail = ({
                   className={cn(
                     "mt-2",
                     statusColorMap[
-                      invoice.status as keyof typeof statusColorMap
+                      mergedInvoiceData.status as keyof typeof statusColorMap
                     ] || statusColorMap.pending,
                   )}
                 >
-                  {invoice.status || "pending"}
+                  {mergedInvoiceData.status || "pending"}
                 </Badge>
               </div>
             </div>
@@ -618,11 +674,11 @@ const InvoiceDetail = ({
                 {t("billTo")}
               </h3>
               <p className="font-medium">
-                {invoice.clientName || "Client Name"}
+                {mergedInvoiceData.clientName || "Client Name"}
               </p>
-              <p>{invoice.clientAddress || "Client Address"}</p>
-              <p>{invoice.clientEmail || "client@example.com"}</p>
-              <p>{invoice.clientPhone || "+1 (555) 987-6543"}</p>
+              <p>{mergedInvoiceData.clientAddress || "Client Address"}</p>
+              <p>{mergedInvoiceData.clientEmail || "client@example.com"}</p>
+              <p>{mergedInvoiceData.clientPhone || "+1 (555) 987-6543"}</p>
             </div>
 
             {/* Invoice Items */}
@@ -643,8 +699,8 @@ const InvoiceDetail = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {invoice.items?.length > 0 ? (
-                    invoice.items.map((item: any, index: number) => (
+                  {mergedInvoiceData.items?.length > 0 ? (
+                    mergedInvoiceData.items.map((item: any, index: number) => (
                       <tr key={index} className="border-b">
                         <td className="py-2">{item.name}</td>
                         <td className="py-2">{item.description}</td>
@@ -679,8 +735,8 @@ const InvoiceDetail = ({
                     </td>
                     <td className="py-2 text-right">
                       $
-                      {invoice.items?.length > 0
-                        ? invoice.items
+                      {mergedInvoiceData.items?.length > 0
+                        ? mergedInvoiceData.items
                             .reduce(
                               (sum: number, item: any) =>
                                 sum + item.quantity * item.price,
@@ -693,18 +749,18 @@ const InvoiceDetail = ({
                   <tr>
                     <td colSpan={3}></td>
                     <td className="py-2 text-right font-semibold">
-                      {t("tax")} ({invoice.taxRate || 10}%):
+                      {t("tax")} ({mergedInvoiceData.taxRate || 10}%):
                     </td>
                     <td className="py-2 text-right">
                       $
-                      {invoice.items?.length > 0
+                      {mergedInvoiceData.items?.length > 0
                         ? (
-                            (invoice.items.reduce(
+                            (mergedInvoiceData.items.reduce(
                               (sum: number, item: any) =>
                                 sum + item.quantity * item.price,
                               0,
                             ) *
-                              (invoice.taxRate || 10)) /
+                              (mergedInvoiceData.taxRate || 10)) /
                             100
                           ).toFixed(2)
                         : "10.00"}
@@ -715,14 +771,14 @@ const InvoiceDetail = ({
                     <td className="py-2 text-right">{t("total")}:</td>
                     <td className="py-2 text-right">
                       $
-                      {invoice.items?.length > 0
+                      {mergedInvoiceData.items?.length > 0
                         ? (
-                            invoice.items.reduce(
+                            mergedInvoiceData.items.reduce(
                               (sum: number, item: any) =>
                                 sum + item.quantity * item.price,
                               0,
                             ) *
-                            (1 + (invoice.taxRate || 10) / 100)
+                            (1 + (mergedInvoiceData.taxRate || 10) / 100)
                           ).toFixed(2)
                         : "110.00"}
                     </td>
@@ -743,7 +799,7 @@ const InvoiceDetail = ({
               >
                 {t("notes")}
               </h3>
-              <p>{invoice.notes || t("defaultInvoiceNote")}</p>
+              <p>{mergedInvoiceData.notes || t("defaultInvoiceNote")}</p>
             </div>
 
             {/* Payment Info */}
@@ -760,15 +816,17 @@ const InvoiceDetail = ({
               </h3>
               <p>
                 <span className="font-semibold">{t("bankName")}:</span>{" "}
-                {invoice.bankName || "Example Bank"}
+                {mergedInvoiceData.bankName || "Example Bank"}
               </p>
               <p>
                 <span className="font-semibold">{t("accountName")}:</span>{" "}
-                {invoice.accountName || invoice.companyName || "Your Company"}
+                {mergedInvoiceData.accountName ||
+                  mergedInvoiceData.companyName ||
+                  "Your Company"}
               </p>
               <p>
                 <span className="font-semibold">{t("accountNumber")}:</span>{" "}
-                {invoice.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
+                {mergedInvoiceData.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
               </p>
             </div>
           </div>

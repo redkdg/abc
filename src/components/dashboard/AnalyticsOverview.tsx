@@ -285,7 +285,7 @@ const AnalyticsOverview = ({
           </CardContent>
         </Card>
 
-        {/* Additional KPIs */}
+        {/* Client Activity Chart */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
@@ -315,6 +315,28 @@ const AnalyticsOverview = ({
           </CardContent>
         </Card>
 
+        {/* Tax Due KPI - Moved next to Conversion Rate */}
+        <Card className="col-span-1 md:col-span-1 lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t("taxDue") || "VAT/Tax Due"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[240px]">
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="text-5xl font-bold text-primary">
+                ${calculateTaxAmount().toLocaleString()}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t("toBeRemitted") || "To be remitted"}
+              </p>
+              <div className="flex items-center justify-center mt-4">
+                <Receipt className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Conversion Rate */}
         <Card className="col-span-1 md:col-span-1 lg:col-span-1">
           <CardHeader className="pb-2">
@@ -337,28 +359,6 @@ const AnalyticsOverview = ({
                     style={{ width: `${conversionRate}%` }}
                   ></div>
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tax Due */}
-        <Card className="col-span-1 md:col-span-1 lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("taxDue") || "VAT/Tax Due"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[240px]">
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-5xl font-bold text-primary">
-                ${calculateTaxAmount().toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t("toBeRemitted") || "To be remitted"}
-              </p>
-              <div className="flex items-center justify-center mt-4">
-                <Receipt className="h-8 w-8 text-muted-foreground" />
               </div>
             </div>
           </CardContent>

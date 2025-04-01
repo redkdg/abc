@@ -18,7 +18,8 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+// Using named function declaration to help with Fast Refresh
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
@@ -39,27 +40,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Add user ID to localStorage keys for user-specific data
     localStorage.setItem(`user-${userData.id}-initialized`, "true");
+
+    // Navigate to dashboard after login
+    navigate("/");
   };
 
   const logout = () => {
+    // Store user ID before clearing state
+    const userId = user?.id;
+
+    // Clear state
     setUser(null);
     setIsAuthenticated(false);
 
     // Clear all user-specific data
-    const userPrefix = localStorage.getItem("user")
-      ? `user-${JSON.parse(localStorage.getItem("user") || "").id}-`
-      : "";
+    if (userId) {
+      const userPrefix = `user-${userId}-`;
 
-    // Remove user data
-    localStorage.removeItem("user");
+      // Remove user data from localStorage
+      localStorage.removeItem("user");
 
-    // Clear all items with user prefix
-    if (userPrefix) {
+      // Clear all items with user prefix
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith(userPrefix)) {
           localStorage.removeItem(key);
         }
       });
+    } else {
+      // Fallback if no user ID is available
+      localStorage.removeItem("user");
     }
 
     // Redirect to login page
@@ -71,4 +80,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
