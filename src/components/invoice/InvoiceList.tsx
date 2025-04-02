@@ -13,6 +13,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getCurrencySymbol } from "@/lib/storage";
 import {
   Table,
   TableBody,
@@ -71,6 +72,7 @@ const InvoiceList = ({
 }: InvoiceListProps) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
+  const currencySymbol = getCurrencySymbol();
 
   const filteredInvoices = invoices.filter(
     (invoice) =>
@@ -127,7 +129,10 @@ const InvoiceList = ({
                   </TableCell>
                   <TableCell>{invoice.client}</TableCell>
                   <TableCell>{invoice.date}</TableCell>
-                  <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {currencySymbol}
+                    {invoice.amount.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

@@ -38,6 +38,30 @@ const LanguageSwitcher = () => {
         >
           Nederlands
         </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLanguage("de")}
+          className={language === "de" ? "bg-primary/10" : ""}
+        >
+          Deutsch
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLanguage("es")}
+          className={language === "es" ? "bg-primary/10" : ""}
+        >
+          Español
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLanguage("pt")}
+          className={language === "pt" ? "bg-primary/10" : ""}
+        >
+          Português
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setLanguage("yue")}
+          className={language === "yue" ? "bg-primary/10" : ""}
+        >
+          廣東話 (Cantonese)
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -37,6 +37,7 @@ import {
   getClients,
   getItems,
   getUserTemplateSettings,
+  getCurrencySymbol,
 } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -86,6 +87,7 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [savedClients, setSavedClients] = useState<any[]>([]);
   const [savedItems, setSavedItems] = useState<any[]>([]);
+  const [currencySymbol, setCurrencySymbol] = useState(getCurrencySymbol());
 
   const [invoice, setInvoice] = useState<InvoiceData>({
     id: Date.now().toString(),
@@ -726,10 +728,12 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
                           {item.quantity}
                         </TableCell>
                         <TableCell className="text-right">
-                          ${item.rate.toFixed(2)}
+                          {currencySymbol}
+                          {item.rate.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
-                          ${item.amount.toFixed(2)}
+                          {currencySymbol}
+                          {item.amount.toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -740,17 +744,26 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
                   <div className="w-64">
                     <div className="flex justify-between py-2">
                       <span>{t("subtotal")}</span>
-                      <span>${invoice.subtotal.toFixed(2)}</span>
+                      <span>
+                        {currencySymbol}
+                        {invoice.subtotal.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between py-2">
                       <span>
                         {t("tax")} ({invoice.taxRate}%)
                       </span>
-                      <span>${invoice.tax.toFixed(2)}</span>
+                      <span>
+                        {currencySymbol}
+                        {invoice.tax.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between py-2 font-bold border-t">
                       <span>{t("total")}</span>
-                      <span>${invoice.total.toFixed(2)}</span>
+                      <span>
+                        {currencySymbol}
+                        {invoice.total.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1037,7 +1050,8 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
                     />
                   </TableCell>
                   <TableCell className="text-right">
-                    ${item.amount.toFixed(2)}
+                    {currencySymbol}
+                    {item.amount.toFixed(2)}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -1058,7 +1072,10 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
             <div className="w-64 space-y-2">
               <div className="flex justify-between">
                 <Label>{t("subtotal")}</Label>
-                <span>${invoice.subtotal.toFixed(2)}</span>
+                <span>
+                  {currencySymbol}
+                  {invoice.subtotal.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -1074,11 +1091,17 @@ const InvoiceGenerator = ({ onSave, onCancel }: InvoiceGeneratorProps) => {
                   />
                   <span>%</span>
                 </div>
-                <span>${invoice.tax.toFixed(2)}</span>
+                <span>
+                  {currencySymbol}
+                  {invoice.tax.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>{t("total")}</span>
-                <span>${invoice.total.toFixed(2)}</span>
+                <span>
+                  {currencySymbol}
+                  {invoice.total.toFixed(2)}
+                </span>
               </div>
             </div>
           </div>

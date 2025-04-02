@@ -25,14 +25,9 @@ import { getUser, UserProfile } from "@/lib/storage";
 interface HeaderProps {
   userName?: string;
   userAvatar?: string;
-  notificationCount?: number;
 }
 
-const Header = ({
-  userName = "John Doe",
-  userAvatar = "",
-  notificationCount = 3,
-}: HeaderProps) => {
+const Header = ({ userName = "John Doe", userAvatar = "" }: HeaderProps) => {
   const { t } = useLanguage();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -62,23 +57,6 @@ const Header = ({
 
       <div className="flex items-center space-x-4">
         <LanguageSwitcher />
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5 text-gray-600" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{t("notifications")}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
 
         <TooltipProvider>
           <Tooltip>

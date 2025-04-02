@@ -13,6 +13,7 @@ import {
 import { Eye, Download, MoreHorizontal, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getCurrencySymbol } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
 
 interface Invoice {
@@ -45,6 +46,7 @@ const RecentInvoices = ({
 }: RecentInvoicesProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const currencySymbol = getCurrencySymbol();
 
   const handleViewInvoice = (id: string) => {
     if (onViewInvoice) {
@@ -103,7 +105,10 @@ const RecentInvoices = ({
                   </TableCell>
                   <TableCell>{invoice.client}</TableCell>
                   <TableCell>{invoice.date}</TableCell>
-                  <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {currencySymbol}
+                    {invoice.amount.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

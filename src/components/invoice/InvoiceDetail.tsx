@@ -26,6 +26,7 @@ import {
   getTemplateSettings,
   getUserTemplateSettings,
   getCompany,
+  getCurrencySymbol,
 } from "@/lib/storage";
 
 interface InvoiceDetailProps {
@@ -53,6 +54,7 @@ const InvoiceDetail = ({
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [companyData, setCompanyData] = useState<any>(null);
   const [templateSettings, setTemplateSettings] = useState<any>(null);
+  const [currencySymbol, setCurrencySymbol] = useState("$");
 
   // Load company data and template settings when invoice changes
   useEffect(() => {
@@ -66,6 +68,10 @@ const InvoiceDetail = ({
       const templateId = invoice.templateId || "template-1";
       const settings = getUserTemplateSettings(templateId);
       setTemplateSettings(settings);
+
+      // Get currency symbol
+      const symbol = getCurrencySymbol();
+      setCurrencySymbol(symbol);
     }
   }, [invoice]);
 
@@ -153,6 +159,29 @@ const InvoiceDetail = ({
       if (logoImg) {
         (logoImg as HTMLImageElement).crossOrigin = "anonymous";
       }
+
+      // Apply invoice details position
+      if (
+        settings.layout.invoiceDetailsPosition === "custom" &&
+        settings.layout.invoiceDetailsCustomPosition
+      ) {
+        const invoiceDetailsElement = element.querySelector(".invoice-details");
+        if (invoiceDetailsElement) {
+          (invoiceDetailsElement as HTMLElement).style.position = "absolute";
+          (invoiceDetailsElement as HTMLElement).style.left =
+            `${settings.layout.invoiceDetailsCustomPosition.x}%`;
+          (invoiceDetailsElement as HTMLElement).style.top =
+            `${settings.layout.invoiceDetailsCustomPosition.y}%`;
+          (invoiceDetailsElement as HTMLElement).style.transform =
+            "translate(-50%, -50%)";
+          (invoiceDetailsElement as HTMLElement).style.background = "white";
+          (invoiceDetailsElement as HTMLElement).style.padding = "8px";
+          (invoiceDetailsElement as HTMLElement).style.borderRadius = "4px";
+          (invoiceDetailsElement as HTMLElement).style.boxShadow =
+            "0 1px 3px rgba(0,0,0,0.1)";
+          (invoiceDetailsElement as HTMLElement).style.zIndex = "10";
+        }
+      }
     }
   };
 
@@ -179,6 +208,25 @@ const InvoiceDetail = ({
 
       // Apply template settings to the cloned element
       applyTemplateSettings(invoiceClone, settings);
+
+      // Make sure all currency symbols are correct
+      const currencyElements =
+        invoiceClone.querySelectorAll(".currency-symbol");
+      currencyElements.forEach((element) => {
+        element.textContent = currencySymbol;
+      });
+
+      // Replace all direct currency symbols in text nodes
+      const replaceTextCurrency = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          // Replace any currency symbols with the correct one
+          node.textContent =
+            node.textContent?.replace(/[$€£¥₹]/g, currencySymbol) || "";
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          Array.from(node.childNodes).forEach(replaceTextCurrency);
+        }
+      };
+      replaceTextCurrency(invoiceClone);
 
       // Apply template settings to the cloned document if available
       const canvas = await html2canvas(invoiceClone, {
@@ -237,6 +285,13 @@ const InvoiceDetail = ({
     companyPhone: invoice.companyPhone || companyData?.phone,
     companyLogo: invoice.companyLogo || companyData?.logo,
   };
+
+  // Determine the layout for invoice details
+  const invoiceDetailsPosition =
+    templateSettings?.layout?.invoiceDetailsPosition || "top-right";
+  const isCustomPosition = invoiceDetailsPosition === "custom";
+  const customPosition = templateSettings?.layout
+    ?.invoiceDetailsCustomPosition || { x: 50, y: 50 };
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
@@ -318,7 +373,7 @@ const InvoiceDetail = ({
             <div
               ref={invoiceRef}
               id="invoice-preview"
-              className="p-8 bg-white rounded-lg shadow-sm"
+              className="p-8 bg-white rounded-lg shadow-sm relative"
               style={{
                 backgroundColor:
                   templateSettings?.colors?.background || "#ffffff",
@@ -358,17 +413,102 @@ const InvoiceDetail = ({
                   </p>
                   <p>{mergedInvoiceData.companyPhone || "+1 (555) 123-4567"}</p>
                 </div>
-                <div className="text-right">
-                  <h2
-                    className="text-xl font-bold mb-2"
+
+                {/* Invoice Details - only show here if position is top-right */}
+                {invoiceDetailsPosition === "top-right" && (
+                  <div className="text-right invoice-details">
+                    <h2
+                      className="text-xl font-bold mb-2"
+                      style={{
+                        color: templateSettings?.colors?.primary || "#4f46e5",
+                        fontFamily: templateSettings?.fonts?.heading || "Inter",
+                        fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
+                      }}
+                    >
+                      {t("invoice")}
+                    </h2>
+                    <p>
+                      <span className="font-semibold">
+                        {t("invoiceNumber")}:
+                      </span>{" "}
+                      {mergedInvoiceData.invoiceNumber || "INV-001"}
+                    </p>
+                    <p>
+                      <span className="font-semibold">{t("date")}:</span>{" "}
+                      {mergedInvoiceData.date ||
+                        new Date().toLocaleDateString()}
+                    </p>
+                    <p>
+                      <span className="font-semibold">{t("dueDate")}:</span>{" "}
+                      {mergedInvoiceData.dueDate ||
+                        new Date(
+                          new Date().setDate(new Date().getDate() + 30),
+                        ).toLocaleDateString()}
+                    </p>
+                    <Badge
+                      className={cn(
+                        "mt-2",
+                        statusColorMap[
+                          mergedInvoiceData.status as keyof typeof statusColorMap
+                        ] || statusColorMap.pending,
+                      )}
+                    >
+                      {mergedInvoiceData.status || "pending"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Client Info */}
+              <div className="mb-8">
+                <h3
+                  className="text-lg font-semibold mb-2"
+                  style={{
+                    color: templateSettings?.colors?.primary || "#4f46e5",
+                    fontFamily: templateSettings?.fonts?.heading || "Inter",
+                    fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
+                  }}
+                >
+                  {t("billTo")}
+                </h3>
+                <p className="font-medium">
+                  {mergedInvoiceData.clientName || "Client Name"}
+                </p>
+                <p>{mergedInvoiceData.clientAddress || "Client Address"}</p>
+                <p>{mergedInvoiceData.clientEmail || "client@example.com"}</p>
+                <p>{mergedInvoiceData.clientPhone || "+1 (555) 987-6543"}</p>
+              </div>
+
+              {/* Invoice Details - if position is bottom or custom */}
+              {(invoiceDetailsPosition === "bottom" || isCustomPosition) && (
+                <div
+                  className="invoice-details"
+                  style={
+                    isCustomPosition
+                      ? {
+                          position: "absolute",
+                          left: `${customPosition.x}%`,
+                          top: `${customPosition.y}%`,
+                          transform: "translate(-50%, -50%)",
+                          background: "white",
+                          padding: "8px",
+                          borderRadius: "4px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                          zIndex: "10",
+                        }
+                      : { marginBottom: "20px" }
+                  }
+                >
+                  <h3
+                    className="text-lg font-semibold mb-2"
                     style={{
                       color: templateSettings?.colors?.primary || "#4f46e5",
                       fontFamily: templateSettings?.fonts?.heading || "Inter",
                       fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
                     }}
                   >
-                    {t("invoice")}
-                  </h2>
+                    {t("invoiceDetails")}
+                  </h3>
                   <p>
                     <span className="font-semibold">{t("invoiceNumber")}:</span>{" "}
                     {mergedInvoiceData.invoiceNumber || "INV-001"}
@@ -395,27 +535,7 @@ const InvoiceDetail = ({
                     {mergedInvoiceData.status || "pending"}
                   </Badge>
                 </div>
-              </div>
-
-              {/* Client Info */}
-              <div className="mb-8">
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{
-                    color: templateSettings?.colors?.primary || "#4f46e5",
-                    fontFamily: templateSettings?.fonts?.heading || "Inter",
-                    fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                  }}
-                >
-                  {t("billTo")}
-                </h3>
-                <p className="font-medium">
-                  {mergedInvoiceData.clientName || "Client Name"}
-                </p>
-                <p>{mergedInvoiceData.clientAddress || "Client Address"}</p>
-                <p>{mergedInvoiceData.clientEmail || "client@example.com"}</p>
-                <p>{mergedInvoiceData.clientPhone || "+1 (555) 987-6543"}</p>
-              </div>
+              )}
 
               {/* Invoice Items */}
               <div className="mb-8">
@@ -443,10 +563,16 @@ const InvoiceDetail = ({
                             <td className="py-2">{item.description}</td>
                             <td className="py-2 text-right">{item.quantity}</td>
                             <td className="py-2 text-right">
-                              ${parseFloat(item.price).toFixed(2)}
+                              <span className="currency-symbol">
+                                {currencySymbol}
+                              </span>
+                              {parseFloat(item.price).toFixed(2)}
                             </td>
                             <td className="py-2 text-right">
-                              ${(item.quantity * item.price).toFixed(2)}
+                              <span className="currency-symbol">
+                                {currencySymbol}
+                              </span>
+                              {(item.quantity * item.price).toFixed(2)}
                             </td>
                           </tr>
                         ),
@@ -456,8 +582,18 @@ const InvoiceDetail = ({
                         <td className="py-2">Sample Item</td>
                         <td className="py-2">Description of the item</td>
                         <td className="py-2 text-right">1</td>
-                        <td className="py-2 text-right">$100.00</td>
-                        <td className="py-2 text-right">$100.00</td>
+                        <td className="py-2 text-right">
+                          <span className="currency-symbol">
+                            {currencySymbol}
+                          </span>
+                          100.00
+                        </td>
+                        <td className="py-2 text-right">
+                          <span className="currency-symbol">
+                            {currencySymbol}
+                          </span>
+                          100.00
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -472,7 +608,9 @@ const InvoiceDetail = ({
                         {t("subtotal")}:
                       </td>
                       <td className="py-2 text-right">
-                        $
+                        <span className="currency-symbol">
+                          {currencySymbol}
+                        </span>
                         {mergedInvoiceData.items?.length > 0
                           ? mergedInvoiceData.items
                               .reduce(
@@ -490,7 +628,9 @@ const InvoiceDetail = ({
                         {t("tax")} ({mergedInvoiceData.taxRate || 10}%):
                       </td>
                       <td className="py-2 text-right">
-                        $
+                        <span className="currency-symbol">
+                          {currencySymbol}
+                        </span>
                         {mergedInvoiceData.items?.length > 0
                           ? (
                               (mergedInvoiceData.items.reduce(
@@ -508,7 +648,9 @@ const InvoiceDetail = ({
                       <td colSpan={3}></td>
                       <td className="py-2 text-right">{t("total")}:</td>
                       <td className="py-2 text-right">
-                        $
+                        <span className="currency-symbol">
+                          {currencySymbol}
+                        </span>
                         {mergedInvoiceData.items?.length > 0
                           ? (
                               mergedInvoiceData.items.reduce(
@@ -537,301 +679,23 @@ const InvoiceDetail = ({
                 >
                   {t("notes")}
                 </h3>
-                <p>{mergedInvoiceData.notes || t("defaultInvoiceNote")}</p>
-              </div>
-
-              {/* Payment Info */}
-              <div className="mt-8 pt-4 border-t">
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{
-                    color: templateSettings?.colors?.primary || "#4f46e5",
-                    fontFamily: templateSettings?.fonts?.heading || "Inter",
-                    fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                  }}
-                >
-                  {t("paymentDetails")}
-                </h3>
-                <p>
-                  <span className="font-semibold">{t("bankName")}:</span>{" "}
-                  {mergedInvoiceData.bankName || "Example Bank"}
-                </p>
-                <p>
-                  <span className="font-semibold">{t("accountName")}:</span>{" "}
-                  {mergedInvoiceData.accountName ||
-                    mergedInvoiceData.companyName ||
-                    "Your Company"}
-                </p>
-                <p>
-                  <span className="font-semibold">{t("accountNumber")}:</span>{" "}
-                  {mergedInvoiceData.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
+                <p className="text-sm text-gray-600">
+                  {mergedInvoiceData.notes || "No notes provided."}
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
-                {t("downloadPdf")}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={handleDownload}
+              className="flex items-center gap-2"
+            >
+              <Download size={16} />
+              {t("downloadPDF")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Main Invoice Display */}
-      <Card>
-        <CardContent className="p-6">
-          <div
-            ref={invoiceRef}
-            id="invoice-preview"
-            className="p-8 bg-white rounded-lg"
-            style={{
-              backgroundColor:
-                templateSettings?.colors?.background || "#ffffff",
-              color: templateSettings?.colors?.text || "#1f2937",
-              fontFamily: templateSettings?.fonts?.body || "Inter",
-            }}
-          >
-            {/* Company Logo and Info */}
-            <div className="flex justify-between mb-8">
-              <div>
-                {mergedInvoiceData.companyLogo && (
-                  <img
-                    src={mergedInvoiceData.companyLogo}
-                    alt="Company Logo"
-                    className="company-logo h-16 mb-2"
-                    style={{
-                      display:
-                        templateSettings?.layout?.showLogo === false
-                          ? "none"
-                          : "block",
-                    }}
-                  />
-                )}
-                <h1
-                  className="text-2xl font-bold"
-                  style={{
-                    color: templateSettings?.colors?.primary || "#4f46e5",
-                    fontFamily: templateSettings?.fonts?.heading || "Inter",
-                    fontSize: `${templateSettings?.fontSize?.heading || 24}px`,
-                  }}
-                >
-                  {mergedInvoiceData.companyName || "Your Company"}
-                </h1>
-                <p>{mergedInvoiceData.companyAddress || "Company Address"}</p>
-                <p>{mergedInvoiceData.companyEmail || "company@example.com"}</p>
-                <p>{mergedInvoiceData.companyPhone || "+1 (555) 123-4567"}</p>
-              </div>
-              <div className="text-right">
-                <h2
-                  className="text-xl font-bold mb-2"
-                  style={{
-                    color: templateSettings?.colors?.primary || "#4f46e5",
-                    fontFamily: templateSettings?.fonts?.heading || "Inter",
-                    fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                  }}
-                >
-                  {t("invoice")}
-                </h2>
-                <p>
-                  <span className="font-semibold">{t("invoiceNumber")}:</span>{" "}
-                  {mergedInvoiceData.invoiceNumber || "INV-001"}
-                </p>
-                <p>
-                  <span className="font-semibold">{t("date")}:</span>{" "}
-                  {mergedInvoiceData.date || new Date().toLocaleDateString()}
-                </p>
-                <p>
-                  <span className="font-semibold">{t("dueDate")}:</span>{" "}
-                  {mergedInvoiceData.dueDate ||
-                    new Date(
-                      new Date().setDate(new Date().getDate() + 30),
-                    ).toLocaleDateString()}
-                </p>
-                <Badge
-                  className={cn(
-                    "mt-2",
-                    statusColorMap[
-                      mergedInvoiceData.status as keyof typeof statusColorMap
-                    ] || statusColorMap.pending,
-                  )}
-                >
-                  {mergedInvoiceData.status || "pending"}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Client Info */}
-            <div className="mb-8">
-              <h3
-                className="text-lg font-semibold mb-2"
-                style={{
-                  color: templateSettings?.colors?.primary || "#4f46e5",
-                  fontFamily: templateSettings?.fonts?.heading || "Inter",
-                  fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                }}
-              >
-                {t("billTo")}
-              </h3>
-              <p className="font-medium">
-                {mergedInvoiceData.clientName || "Client Name"}
-              </p>
-              <p>{mergedInvoiceData.clientAddress || "Client Address"}</p>
-              <p>{mergedInvoiceData.clientEmail || "client@example.com"}</p>
-              <p>{mergedInvoiceData.clientPhone || "+1 (555) 987-6543"}</p>
-            </div>
-
-            {/* Invoice Items */}
-            <div className="mb-8">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr
-                    className="border-b"
-                    style={{
-                      color: templateSettings?.colors?.primary || "#4f46e5",
-                    }}
-                  >
-                    <th className="py-2 text-left">{t("item")}</th>
-                    <th className="py-2 text-left">{t("description")}</th>
-                    <th className="py-2 text-right">{t("quantity")}</th>
-                    <th className="py-2 text-right">{t("price")}</th>
-                    <th className="py-2 text-right">{t("amount")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mergedInvoiceData.items?.length > 0 ? (
-                    mergedInvoiceData.items.map((item: any, index: number) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-2">{item.name}</td>
-                        <td className="py-2">{item.description}</td>
-                        <td className="py-2 text-right">{item.quantity}</td>
-                        <td className="py-2 text-right">
-                          ${parseFloat(item.price).toFixed(2)}
-                        </td>
-                        <td className="py-2 text-right">
-                          ${(item.quantity * item.price).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="border-b">
-                      <td className="py-2">Sample Item</td>
-                      <td className="py-2">Description of the item</td>
-                      <td className="py-2 text-right">1</td>
-                      <td className="py-2 text-right">$100.00</td>
-                      <td className="py-2 text-right">$100.00</td>
-                    </tr>
-                  )}
-                </tbody>
-                <tfoot
-                  style={{
-                    color: templateSettings?.colors?.secondary || "#f97316",
-                  }}
-                >
-                  <tr>
-                    <td colSpan={3}></td>
-                    <td className="py-2 text-right font-semibold">
-                      {t("subtotal")}:
-                    </td>
-                    <td className="py-2 text-right">
-                      $
-                      {mergedInvoiceData.items?.length > 0
-                        ? mergedInvoiceData.items
-                            .reduce(
-                              (sum: number, item: any) =>
-                                sum + item.quantity * item.price,
-                              0,
-                            )
-                            .toFixed(2)
-                        : "100.00"}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={3}></td>
-                    <td className="py-2 text-right font-semibold">
-                      {t("tax")} ({mergedInvoiceData.taxRate || 10}%):
-                    </td>
-                    <td className="py-2 text-right">
-                      $
-                      {mergedInvoiceData.items?.length > 0
-                        ? (
-                            (mergedInvoiceData.items.reduce(
-                              (sum: number, item: any) =>
-                                sum + item.quantity * item.price,
-                              0,
-                            ) *
-                              (mergedInvoiceData.taxRate || 10)) /
-                            100
-                          ).toFixed(2)
-                        : "10.00"}
-                    </td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td colSpan={3}></td>
-                    <td className="py-2 text-right">{t("total")}:</td>
-                    <td className="py-2 text-right">
-                      $
-                      {mergedInvoiceData.items?.length > 0
-                        ? (
-                            mergedInvoiceData.items.reduce(
-                              (sum: number, item: any) =>
-                                sum + item.quantity * item.price,
-                              0,
-                            ) *
-                            (1 + (mergedInvoiceData.taxRate || 10) / 100)
-                          ).toFixed(2)
-                        : "110.00"}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <h3
-                className="text-lg font-semibold mb-2"
-                style={{
-                  color: templateSettings?.colors?.primary || "#4f46e5",
-                  fontFamily: templateSettings?.fonts?.heading || "Inter",
-                  fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                }}
-              >
-                {t("notes")}
-              </h3>
-              <p>{mergedInvoiceData.notes || t("defaultInvoiceNote")}</p>
-            </div>
-
-            {/* Payment Info */}
-            <div className="mt-8 pt-4 border-t">
-              <h3
-                className="text-lg font-semibold mb-2"
-                style={{
-                  color: templateSettings?.colors?.primary || "#4f46e5",
-                  fontFamily: templateSettings?.fonts?.heading || "Inter",
-                  fontSize: `${templateSettings?.fontSize?.subheading || 18}px`,
-                }}
-              >
-                {t("paymentDetails")}
-              </h3>
-              <p>
-                <span className="font-semibold">{t("bankName")}:</span>{" "}
-                {mergedInvoiceData.bankName || "Example Bank"}
-              </p>
-              <p>
-                <span className="font-semibold">{t("accountName")}:</span>{" "}
-                {mergedInvoiceData.accountName ||
-                  mergedInvoiceData.companyName ||
-                  "Your Company"}
-              </p>
-              <p>
-                <span className="font-semibold">{t("accountNumber")}:</span>{" "}
-                {mergedInvoiceData.accountNumber || "XXXX-XXXX-XXXX-XXXX"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

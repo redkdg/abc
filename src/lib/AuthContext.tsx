@@ -18,13 +18,15 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-// Using named function declaration to help with Fast Refresh
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+// Use function declaration for component to ensure Fast Refresh works properly
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
-  // Load user from localStorage on initial render
+  // Check for existing user in localStorage on initial render
   useEffect(() => {
     const storedUser = getUser();
     if (storedUser) {

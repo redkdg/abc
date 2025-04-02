@@ -1,12 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, Building2 } from "lucide-react";
+import { Upload, Building2, DollarSign } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Currency,
+  currencySymbols,
+  getCurrency,
+  saveCurrency,
+} from "@/lib/storage";
 
 interface CompanyProfileProps {
   company: any;
@@ -26,12 +39,25 @@ const CompanyProfile = ({ company, onSave }: CompanyProfileProps) => {
       logo: "",
     },
   );
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+
+  // Load currency when component mounts
+  useEffect(() => {
+    const currency = getCurrency();
+    setSelectedCurrency(currency);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCurrencyChange = (value: string) => {
+    const currency = value as Currency;
+    setSelectedCurrency(currency);
+    saveCurrency(currency);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -181,6 +207,42 @@ const CompanyProfile = ({ company, onSave }: CompanyProfileProps) => {
                 onChange={handleChange}
                 rows={3}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="currency">{t("currency") || "Currency"}</Label>
+              <Select
+                value={selectedCurrency}
+                onValueChange={handleCurrencyChange}
+              >
+                <SelectTrigger id="currency" className="w-full">
+                  <SelectValue placeholder="Select currency">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span>
+                        {selectedCurrency} (
+                        {currencySymbols[selectedCurrency as Currency]})
+                      </span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(currencySymbols).map(([code, symbol]) => (
+                    <SelectItem key={code} value={code}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{code}</span>
+                        <span className="text-muted-foreground">
+                          ({symbol})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("currencyNote") ||
+                  "This currency will be used throughout the application"}
+              </p>
             </div>
           </CardContent>
         </Card>

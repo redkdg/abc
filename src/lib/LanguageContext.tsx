@@ -21,7 +21,10 @@ function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Load language from localStorage on initial render
   useEffect(() => {
     const savedLanguage = localStorage.getItem("language") as Language;
-    if (savedLanguage && ["en", "fr", "nl"].includes(savedLanguage)) {
+    if (
+      savedLanguage &&
+      ["en", "fr", "nl", "de", "es", "pt", "yue"].includes(savedLanguage)
+    ) {
       setLanguage(savedLanguage);
     }
   }, []);

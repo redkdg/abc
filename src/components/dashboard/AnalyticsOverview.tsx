@@ -13,6 +13,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getCurrencySymbol } from "@/lib/storage";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -115,6 +116,7 @@ const AnalyticsOverview = ({
   conversionRate = 0,
 }: AnalyticsOverviewProps) => {
   const { t } = useLanguage();
+  const currencySymbol = getCurrencySymbol();
 
   // Calculate real trends based on actual data
   const calculateTrend = (current: number, previous: number) => {
@@ -191,7 +193,7 @@ const AnalyticsOverview = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <AnalyticsCard
           title={t("totalRevenue")}
-          value={`${(totalRevenue || 0).toLocaleString()}`}
+          value={`${currencySymbol}${(totalRevenue || 0).toLocaleString()}`}
           description={t("last30Days")}
           icon={<DollarSign className="h-4 w-4" />}
           trend={calculateTrend(totalRevenue, totalRevenue * 0.85)}
@@ -325,7 +327,8 @@ const AnalyticsOverview = ({
           <CardContent className="h-[240px]">
             <div className="flex flex-col items-center justify-center h-full">
               <div className="text-5xl font-bold text-primary">
-                ${calculateTaxAmount().toLocaleString()}
+                {currencySymbol}
+                {calculateTaxAmount().toLocaleString()}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 {t("toBeRemitted") || "To be remitted"}

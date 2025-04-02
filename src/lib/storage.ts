@@ -8,6 +8,39 @@ export interface UserProfile {
   avatar?: string;
 }
 
+// Currency type
+export type Currency =
+  | "USD"
+  | "EUR"
+  | "GBP"
+  | "CAD"
+  | "AUD"
+  | "JPY"
+  | "CNY"
+  | "INR"
+  | "MXN"
+  | "BRL"
+  | "ZAR"
+  | "SGD"
+  | "HKD";
+
+// Currency symbols
+export const currencySymbols: Record<Currency, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CAD: "C$",
+  AUD: "A$",
+  JPY: "¥",
+  CNY: "¥",
+  INR: "₹",
+  MXN: "$",
+  BRL: "R$",
+  ZAR: "R",
+  SGD: "S$",
+  HKD: "HK$",
+};
+
 // Get user from local storage
 export const getUser = (): UserProfile | null => {
   const userData = localStorage.getItem("user");
@@ -63,6 +96,29 @@ export const saveSelectedTemplate = (templateId: string): void => {
   localStorage.setItem(`${prefix}selectedTemplate`, templateId);
 };
 
+// Get currency from local storage
+export const getCurrency = (): Currency => {
+  const prefix = getUserKeyPrefix();
+  const savedCurrency = localStorage.getItem(`${prefix}currency`);
+  // Check if the saved currency is a valid Currency type
+  if (savedCurrency && Object.keys(currencySymbols).includes(savedCurrency)) {
+    return savedCurrency as Currency;
+  }
+  return "USD";
+};
+
+// Save currency to local storage
+export const saveCurrency = (currency: Currency): void => {
+  const prefix = getUserKeyPrefix();
+  localStorage.setItem(`${prefix}currency`, currency);
+};
+
+// Get currency symbol
+export const getCurrencySymbol = (): string => {
+  const currency = getCurrency();
+  return currencySymbols[currency] || "$";
+};
+
 // Template settings
 export interface TemplateSettings {
   margins: {
@@ -90,8 +146,11 @@ export interface TemplateSettings {
     logoPosition: string;
     companyInfoPosition: string;
     clientInfoPosition: string;
+    invoiceDetailsPosition: string;
+    invoiceDetailsCustomPosition?: { x: number; y: number };
     showHeader: boolean;
     showFooter: boolean;
+    showLogo: boolean;
   };
 }
 
@@ -132,6 +191,7 @@ export const getTemplateSettings = (
       companyInfoPosition: "top-left",
       clientInfoPosition: "top-right",
       invoiceDetailsPosition: "top-right",
+      invoiceDetailsCustomPosition: { x: 50, y: 50 },
       showHeader: true,
       showFooter: true,
       showLogo: true,

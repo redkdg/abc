@@ -20,8 +20,8 @@ const UserMenu = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Just call logout, the navigation is handled in the AuthContext
     logout();
-    navigate("/login");
   };
 
   const handleSettings = () => {
