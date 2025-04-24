@@ -28,6 +28,8 @@ import {
   getCompany,
   getCurrencySymbol,
 } from "@/lib/storage";
+import PeppolExportButton from "./PeppolExportButton";
+import DataFusionExportButton from "./DataFusionExportButton";
 
 interface InvoiceDetailProps {
   invoice: any;
@@ -334,6 +336,21 @@ const InvoiceDetail = ({
             <Send className="h-4 w-4" />
             {t("send")}
           </Button>
+          {/* Peppol Export Button */}
+          {invoice.client && (
+            <PeppolExportButton
+              invoice={invoice}
+              client={invoice.client}
+              variant="outline"
+              size="sm"
+            />
+          )}
+          {/* DataFusion Export Button */}
+          <DataFusionExportButton
+            invoice={invoice}
+            variant="outline"
+            size="sm"
+          />
           <Button
             variant="outline"
             size="sm"

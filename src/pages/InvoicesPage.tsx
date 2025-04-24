@@ -57,12 +57,20 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
     }
   };
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     id: string,
     newStatus: "paid" | "pending" | "overdue",
     updatedInvoices: any[],
   ) => {
+    // Import the DataFusion sync function
+    const { syncInvoiceToDataFusion, showSyncSuccessToast } = await import(
+      "@/lib/datafusion"
+    );
+
     setInvoices(updatedInvoices);
+
+    // Find the updated invoice
+    const updatedInvoice = updatedInvoices.find((inv) => inv.id === id);
 
     // If the status changed invoice is currently selected, update it
     if (selectedInvoice && selectedInvoice.id === id) {
@@ -76,18 +84,46 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
       title: t("statusUpdated"),
       description: t("statusUpdatedDescription"),
     });
+
+    // Sync status change to DataFusion
+    if (updatedInvoice) {
+      const syncSuccess = await syncInvoiceToDataFusion(
+        updatedInvoice,
+        "update",
+      );
+      if (syncSuccess) {
+        showSyncSuccessToast(updatedInvoice, "update");
+      }
+    }
   };
 
-  const handleSaveInvoice = (invoice: any) => {
+  const handleSaveInvoice = async (invoice: any) => {
+    // Import the DataFusion sync function
+    const { syncInvoiceToDataFusion, showSyncSuccessToast } = await import(
+      "@/lib/datafusion"
+    );
+
     // Check if we're updating an existing invoice
     if (selectedInvoice) {
+      const updatedInvoice = { ...invoice };
       setInvoices(
-        invoices.map((inv) => (inv.id === selectedInvoice.id ? invoice : inv)),
+        invoices.map((inv) =>
+          inv.id === selectedInvoice.id ? updatedInvoice : inv,
+        ),
       );
       toast({
         title: t("invoiceUpdated"),
         description: t("invoiceUpdatedDescription"),
       });
+
+      // Automatically sync to DataFusion
+      const syncSuccess = await syncInvoiceToDataFusion(
+        updatedInvoice,
+        "update",
+      );
+      if (syncSuccess) {
+        showSyncSuccessToast(updatedInvoice, "update");
+      }
     } else {
       // Add a new invoice with a unique ID
       const newInvoice = {
@@ -99,16 +135,44 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
         title: t("invoiceCreated"),
         description: t("invoiceCreatedDescription"),
       });
+
+      // Automatically sync to DataFusion
+      const syncSuccess = await syncInvoiceToDataFusion(newInvoice, "create");
+      if (syncSuccess) {
+        showSyncSuccessToast(newInvoice, "create");
+      }
     }
     setView("list");
   };
 
-  const handleDeleteInvoice = (id: string) => {
-    setInvoices(invoices.filter((inv) => inv.id !== id));
-    toast({
-      title: t("invoiceDeleted"),
-      description: t("invoiceDeletedDescription"),
-    });
+  const handleDeleteInvoice = async (id: string) => {
+    // Import the DataFusion sync function
+    const { syncInvoiceToDataFusion, showSyncSuccessToast } = await import(
+      "@/lib/datafusion"
+    );
+
+    // Find the invoice before deleting it
+    const invoiceToDelete = invoices.find((inv) => inv.id === id);
+
+    if (invoiceToDelete) {
+      // Sync deletion to DataFusion before removing from local state
+      const syncSuccess = await syncInvoiceToDataFusion(
+        invoiceToDelete,
+        "delete",
+      );
+
+      // Remove from local state
+      setInvoices(invoices.filter((inv) => inv.id !== id));
+
+      toast({
+        title: t("invoiceDeleted"),
+        description: t("invoiceDeletedDescription"),
+      });
+
+      if (syncSuccess) {
+        showSyncSuccessToast(invoiceToDelete, "delete");
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -121,6 +185,7 @@ const InvoicesPage = ({ invoices, setInvoices }: InvoicesPageProps) => {
       {view === "list" && (
         <InvoiceList
           invoices={invoices}
+          onCreateInvoice={handleCreateInvoice}
           onViewInvoice={handleViewInvoice}
           onDeleteInvoice={handleDeleteInvoice}
           onOpenGenerator={handleOpenGenerator}

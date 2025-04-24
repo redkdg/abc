@@ -14,6 +14,7 @@ import {
   FileText,
   Palette,
   Settings,
+  Database,
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -66,6 +67,12 @@ const QuickActions = ({ actions, onCreateInvoice }: QuickActionsProps) => {
       description: t("updateColorsFontsLogo"),
       icon: <Palette size={20} />,
       onClick: () => navigate("/templates?action=customize"),
+    },
+    {
+      title: t("apiIntegration"),
+      description: t("connectToDataFusion"),
+      icon: <Database size={20} />,
+      onClick: () => navigate("/settings"),
     },
     {
       title: t("companySettingsAction"),

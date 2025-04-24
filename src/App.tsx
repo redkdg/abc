@@ -14,7 +14,7 @@ import {
   saveUserTemplateSettings,
 } from "./lib/storage";
 import { useAuth } from "./lib/AuthContext";
-import { useRoutes, Routes, Route } from "react-router-dom";
+import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
 import LanguageProvider from "./lib/LanguageContext";
@@ -25,6 +25,7 @@ import ClientsPage from "./pages/ClientsPage";
 import ItemsPage from "./pages/ItemsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import CompanyProfilePage from "./pages/CompanyProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 
 function App() {
@@ -414,6 +415,26 @@ function App() {
                 )
               }
             />
+            <Route
+              path="/settings/api"
+              element={
+                isAuthenticated ? (
+                  <MainLayout>
+                    <SettingsPage />
+                  </MainLayout>
+                ) : (
+                  <LoginPage />
+                )
+              }
+            />
+
+            {/* Add this before the catchall route */}
+            {import.meta.env.VITE_TEMPO === "true" && (
+              <Route path="/tempobook/*" element={<div />} />
+            )}
+
+            {/* Catch-all route */}
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
           {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
         </>

@@ -131,7 +131,7 @@ const InvoiceList = ({
                   <TableCell>{invoice.date}</TableCell>
                   <TableCell>
                     {currencySymbol}
-                    {invoice.amount.toFixed(2)}
+                    {(invoice.amount ?? 0).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     <Badge

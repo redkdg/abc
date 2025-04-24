@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   FileSpreadsheet,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -92,7 +93,13 @@ const Sidebar = () => {
           to="/settings"
           icon={<Settings size={20} />}
           label={t("companyProfile")}
-          active={currentPath.startsWith("/settings")}
+          active={currentPath === "/settings"}
+        />
+        <SidebarLink
+          to="/settings/api"
+          icon={<LinkIcon size={20} />}
+          label={t("apiIntegration")}
+          active={currentPath === "/settings/api"}
         />
         <SidebarLink
           to="/logout"
